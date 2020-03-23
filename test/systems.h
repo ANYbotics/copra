@@ -6,9 +6,12 @@
 
 #include <Eigen/Core>
 
+#include <gtest/gtest.h>
+
 // Test base on scilab qld example:
 // https://help.scilab.org/doc/5.5.2/en_US/qld.html
-struct Problem {
+class Problem : public ::testing::Test {
+  protected:
     Problem()
         : Q(6, 6)
         , Aeq(3, 6)
@@ -32,6 +35,7 @@ struct Problem {
         XU << 10000, 100, 1.5, 100, 100, 1000;
     }
 
+  protected:
     Eigen::MatrixXd Q, Aeq, Aineq;
     Eigen::VectorXd c, beq, bineq, XL, XU;
     int nrvars, nreqs, nrineqs;
@@ -39,7 +43,8 @@ struct Problem {
 
 // The final point of the trajectory should be [val, 0] where val can be any value inferior to 0;
 // Test bound constraints
-struct BoundedSystem {
+class BoundedSystem : public ::testing::Test {
+  protected:
     BoundedSystem()
         : T(0.005)
         , mass(5)
@@ -83,6 +88,7 @@ struct BoundedSystem {
         xUpper(1) = 0; // The velocity can't be positive
     }
 
+  protected:
     double T, mass;
     int nbStep;
     Eigen::MatrixXd A, B, M, N;
@@ -91,7 +97,8 @@ struct BoundedSystem {
 
 // The final point of the trajectory should be [val, 0] where val can be any value inferior to 0 (same as previous one)
 // Test inequality constraints
-struct IneqSystem {
+class IneqSystem : public ::testing::Test {
+  protected:
     IneqSystem()
         : T(0.005)
         , mass(5)
@@ -130,6 +137,7 @@ struct IneqSystem {
         ud << 2;
     }
 
+  protected:
     double T, mass;
     int nbStep;
     Eigen::MatrixXd A, B, G, E, M, N;
@@ -138,7 +146,8 @@ struct IneqSystem {
 
 // The final point of the trajectory should be [val, 0] where val can be any value inferior to 0 (same as previous one)
 // Test mixed constraints
-struct MixedSystem {
+class MixedSystem : public ::testing::Test {
+  protected:
     MixedSystem()
         : T(0.005)
         , mass(5)
@@ -175,6 +184,7 @@ struct MixedSystem {
         ud << 2;
     }
 
+  protected:
     double T, mass;
     int nbStep;
     Eigen::MatrixXd A, B, G, E, M, N;
@@ -184,7 +194,8 @@ struct MixedSystem {
 // Search forces that let the system immobile (should be equal to gravity * tiemstep)
 // Test Equality constraints
 // xd becomes useless here
-struct EqSystem {
+class EqSystem : public ::testing::Test {
+  protected:
     EqSystem()
         : T(0.005)
         , mass(5)
@@ -222,6 +233,7 @@ struct EqSystem {
         p = x0;
     }
 
+  protected:
     double T, mass;
     int nbStep;
     Eigen::MatrixXd A, B, E, M, N;

@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>copra</name>
+  <version>1.2.3</version>
+  <description>Library for linear model predictive control in C++14</description>
+  <maintainer email="scaron@anybotics.com">Stéphane Caron</maintainer>
+  <maintainer email="avijayan@anybotics.com">Aravind Vijayan</maintainer>
+  <license>BSD</license>
+  <url type="website">https://github.com/anybotics/copra</url>
+  <url type="bugtracker">https://github.com/jrl-umi3218/copra/issues</url>
+  <author email="vincent.samy@aist.go.jp">Vincent Samy</author>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>cmake_clang_tools</build_depend>
+  <build_depend>eigen-qld</build_depend>
+  <build_depend>eigen-quadprog</build_depend>
+  <build_depend>eigen</build_depend>
+  <build_export_depend>eigen-quadprog</build_export_depend>
+  <build_export_depend>eigen-qld</build_export_depend>
+  <build_export_depend>eigen</build_export_depend>
+  <test_depend>gtest</test_depend>
+  <test_depend>cmake_code_coverage</test_depend>
+</package>

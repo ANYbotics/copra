@@ -1,53 +1,158 @@
+# BSD 2-Clause License
 #
-# Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+# Copyright (c) 2012-2019, CNRS-UM LIRMM, CNRS-AIST JRL
+# All rights reserved.
 #
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+# list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Version minimum
-cmake_minimum_required(VERSION 3.1.3)
+cmake_minimum_required(VERSION 3.5.1)
+project(copra)
 
-set(PROJECT_NAME copra)
-set(PROJECT_DESCRIPTION "This library is an implementation of a linear model predictive control")
-set(PROJECT_URL "https://github.com/jrl-umi3218/copra")
-set(PROJECT_DEBUG_POSTFIX "_d")
-set(PROJECT_VERSION 1.2.3)
-
-include(cmake/base.cmake)
-include(cmake/msvc-specific.cmake)
-include(optional_qps.cmake)
-
-# SET(CXX_DISABLE_WERROR True)
-set(DOXYGEN_USE_MATHJAX "YES")
 set(CMAKE_CXX_STANDARD 14)
+add_compile_options(-Wall -Wextra -Wpedantic)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-option(PYTHON_BINDING "Generate python bindings." OFF)
-option(BUILD_TESTING "Build unit tests." ON)
+find_package(catkin REQUIRED COMPONENTS
+  eigen-qld
+  eigen-quadprog
+)
 
-project(${PROJECT_NAME} LANGUAGES CXX VERSION ${PROJECT_VERSION})
+find_package(Eigen3 REQUIRED)
 
-set(INSTALL_GENERATED_HEADERS OFF)
+###################################
+## catkin specific configuration ##
+###################################
 
-if(MSVC)
-    set(CMAKE_MSVCIDE_RUN_PATH "\$(SolutionDir)/src/\$(Configuration)")
-endif(MSVC)
+catkin_package(
+  INCLUDE_DIRS
+    include
+    ${EIGEN3_INCLUDE_DIR} # Eigen does not set variables according to the CMake naming convention.
+  LIBRARIES
+    ${PROJECT_NAME}
+  CATKIN_DEPENDS
+    ${CATKIN_PACKAGE_HEADER_DEPENDENCIES}
+)
 
-set(BOOST_REQUIRED 1.48)
-set(Eigen_REQUIRED "eigen3 >= 3.2.0")
+###########
+## Build ##
+###########
 
-add_project_dependency(eigen-quadprog REQUIRED)
-add_optional_qps(COPRA_PACKAGE_LIST)
-foreach(COPRA_PKG ${COPRA_PACKAGE_LIST})
-    list(APPEND _PACKAGE_CONFIG_DEPENDENCIES "find_package(${COPRA_PKG} REQUIRED)")
-endforeach()
+add_library(${PROJECT_NAME}
+  # src/GUROBISolver.cpp  # commercial solver
+  # src/LSSOLSolver.cpp  # also commercial
+  # src/OSQPSolver.cpp  # we can add this interface by importing https://github.com/jrl-umi3218/eigen-osqp
+  src/AutoSpan.cpp
+  src/LMPC.cpp
+  src/PreviewSystem.cpp
+  src/QLDSolver.cpp
+  src/QuadProgSolver.cpp
+  src/SolverInterface.cpp
+  src/constraints.cpp
+  src/costFunctions.cpp
+  src/debugUtils.cpp
+  src/solverUtils.cpp
+)
 
-add_subdirectory(src)
+add_dependencies(${PROJECT_NAME}
+  ${catkin_EXPORTED_TARGETS}
+)
 
-if(${BUILD_TESTING})
-    add_subdirectory(tests)
+target_compile_definitions(${PROJECT_NAME} PUBLIC
+  # EIGEN_GUROBI_FOUND  # uncomment if adding Gurobi
+  # EIGEN_LSSOL_FOUND  # uncomment if adding LSSOL
+  # EIGEN_OSQP_FOUND  # uncomment if adding eigen-osqp
+  EIGEN_QLD_FOUND
+)
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+  include/${PROJECT_NAME}
+  SYSTEM    # Libraries listed after 'SYSTEM' are marked as external, and don't generate warnings.
+    ${catkin_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
+)
+
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
+#############
+## Install ##
+#############
+
+install(
+  TARGETS
+    ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(
+  DIRECTORY
+    include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
+
+##########
+## Test ##
+##########
+
+if(CATKIN_ENABLE_TESTING)
+  find_package(catkin REQUIRED
+    COMPONENTS
+      ${CATKIN_PACKAGE_DEPENDENCIES}
+  )
+
+  catkin_add_gtest(test_${PROJECT_NAME}
+    test/TestLMPC.cpp
+    test/TestSolvers.cpp
+    test/main.cpp
+    test/tools.cpp
+  )
 endif()
 
-if(${PYTHON_BINDING})
-    add_subdirectory(binding/python)
-endif()
+if(TARGET test_${PROJECT_NAME})
+  target_link_libraries(test_${PROJECT_NAME}
+    ${PROJECT_NAME}
+  )
 
-setup_project_finalize()
-setup_project_package_finalize()
+  target_compile_definitions(test_${PROJECT_NAME} PUBLIC
+    # EIGEN_GUROBI_FOUND  # uncomment if adding Gurobi
+    # EIGEN_LSSOL_FOUND  # uncomment if adding LSSOL
+    # EIGEN_OSQP_FOUND  # uncomment if adding eigen-osqp
+    EIGEN_QLD_FOUND
+  )
+
+  target_include_directories(test_${PROJECT_NAME} PRIVATE
+    include/${PROJECT_NAME}
+    SYSTEM
+      ${catkin_INCLUDE_DIRS}
+      ${EIGEN3_INCLUDE_DIR}
+  )
+
+  find_package(cmake_code_coverage QUIET)
+  if(cmake_code_coverage_FOUND)
+    add_gtest_coverage(
+      TEST_BUILD_TARGETS test_${PROJECT_NAME}
+    )
+  endif(cmake_code_coverage_FOUND)
+endif()
