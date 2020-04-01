@@ -1,21 +1,23 @@
 /*
  * Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+ * Copyright 2020 ANYbotics AG
  */
 
 #pragma once
 
-#include "api.h"
-
-#include "debugUtils.h"
-#include "typedefs.h"
-#include <Eigen/Core>
 #include <string>
 #include <vector>
 
+#include <Eigen/Core>
+
+#include "copra/api.h"
+#include "copra/debugUtils.h"
+#include "copra/typedefs.h"
+
 namespace copra {
 
-//forward declaration
-struct PreviewSystem;
+// Forward declaration
+struct System;
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
@@ -65,15 +67,15 @@ public:
 
     /**
      * Initialization of the constraint.
-     * \param ps The PreviewSystem.
+     * \param ps The System.
      */
-    virtual void initializeConstraint(const PreviewSystem& ps) = 0;
+    virtual void initializeConstraint(const System& ps) = 0;
 
     /**
      * Update the constraint.
-     * \param ps The PreviewSystem.
+     * \param ps The System.
      */
-    virtual void update(const PreviewSystem& ps) = 0;
+    virtual void update(const System& ps) = 0;
 
     /**
      * Get the type of the constraint
@@ -171,13 +173,13 @@ public:
      * \param ps A preview system.
      * \throw Throw an std::domain_error if E or f is not of the dimension of the preview system.
      */
-    void initializeConstraint(const PreviewSystem& ps) override;
+    void initializeConstraint(const System& ps) override;
 
     /**
      * Compute \f$A\f$ and \f$b\f$ from \f$E\f$, \f$f\f$ and the preview system.
      * \param ps The preview system.
      */
-    void update(const PreviewSystem& ps) override;
+    void update(const System& ps) override;
 
     /**
      * Get the type of the constraint
@@ -231,13 +233,13 @@ public:
      * This is done by resizing its inner matrices and vectors and setting the number of constraints.
      * \param ps A preview system.
      */
-    void initializeConstraint(const PreviewSystem& ps) override;
+    void initializeConstraint(const System& ps) override;
 
     /**
      * Compute \f$A\f$ and \f$b\f$ from \f$E\f$, \f$f\f$ and the preview system.
      * \param ps A preview system.
      */
-    void update(const PreviewSystem& ps) override;
+    void update(const System& ps) override;
 
     /**
      * Get the type of the constraint
@@ -296,13 +298,13 @@ public:
      * This is done by resizing its inner matrices and vectors and setting the number of constraints.
      * \param ps A preview system.
      */
-    void initializeConstraint(const PreviewSystem& ps) override;
+    void initializeConstraint(const System& ps) override;
 
     /**
      * Compute \f$A\f$ and \f$b\f$ from \f$E\f$, \f$G\f$, \f$f\f$ and the preview system.
      * \param ps A preview system.
      */
-    void update(const PreviewSystem& ps) override;
+    void update(const System& ps) override;
 
     /**
      * Get the type of the constraint
@@ -368,13 +370,13 @@ public:
      * \param ps A preview system.
      * \throw Throw an std::domain_error if lower or upper is badly dimension
      */
-    void initializeConstraint(const PreviewSystem& ps) override;
+    void initializeConstraint(const System& ps) override;
 
     /**
      * Compute \f$A\f$ and \f$b\f$ from \f$E\f$, \f$f\f$ and the preview system.
      * \param ps A preview system.
      */
-    void update(const PreviewSystem& ps) override;
+    void update(const System& ps) override;
 
     /**
      * Get the type of the constraint
@@ -428,13 +430,13 @@ public:
      * \param ps A preview system.
      * \throw Throw an std::domain_error if lower or upper is badly dimension
      */
-    void initializeConstraint(const PreviewSystem& ps) override;
+    void initializeConstraint(const System& ps) override;
 
     /**
      * Compute \f$\underline{U}\f$ and \f$\overline{U}\f$ from \f$\underline{u}\f$, \f$\overline{u}\f$ and the preview system.
      * \param ps A preview system.
      */
-    void update(const PreviewSystem& ps) override;
+    void update(const System& ps) override;
 
     /**
      * Get the type of the constraint

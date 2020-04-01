@@ -1,10 +1,11 @@
 /*
  * Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+ * Copyright 2020 ANYbotics AG
  */
 
 #pragma once
 
-#include "api.h"
+#include "copra/api.h"
 
 #include "QuadProgSolver.h"
 #ifdef EIGEN_QLD_FOUND
@@ -62,12 +63,4 @@ enum class COPRA_DLLAPI SolverFlag {
  */
 COPRA_DLLAPI std::unique_ptr<SolverInterface> solverFactory(SolverFlag flag);
 
-/**
- * Helper function to get a desired solver.
- * This should only be used by python (unique_ptr are not bindable)
- * \param flag Flag of the solver.
- * \return The desired solver.
- */
-COPRA_DLLAPI SolverInterface* pythonSolverFactory(SolverFlag flag);
-
-} // namespace pc
+} // namespace copra

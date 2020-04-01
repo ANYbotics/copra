@@ -1,10 +1,11 @@
 /*
  * Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+ * Copyright 2020 ANYbotics AG
  */
 
-#include "SolverInterface.h"
 #include <iostream>
-#include <utility>
+
+#include "copra/SolverInterface.h"
 
 namespace copra {
 
@@ -56,4 +57,4 @@ void SolverInterface::SI_warmStart(bool /* w */)
     std::cout << "No warmStart(bool) function for this qp" << std::endl;
 }
 
-} // namespace pc
+} // namespace copra

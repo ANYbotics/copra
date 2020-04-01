@@ -1,27 +1,18 @@
 /*
  * Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+ * Copyright 2020 ANYbotics AG
  */
 
-#include "QuadProgSolver.h"
-#include "systems.h"
-#ifdef EIGEN_QLD_FOUND
-#include "QLDSolver.h"
-#endif
-#ifdef EIGEN_LSSOL_FOUND
-#include "LSSOLSolver.h"
-#endif
-#ifdef EIGEN_GUROBI_FOUND
-#include "GUROBISolver.h"
-#endif
-#ifdef EIGEN_OSQP_FOUND
-#include "OSQPSolver.h"
-#endif
-
-#include <Eigen/Core>
 #include <iostream>
 #include <numeric>
 
+#include <Eigen/Core>
+
 #include <gtest/gtest.h>
+
+#include "copra/solvers/all.h"
+
+#include "time_invariant_systems.h"
 
 TEST_F(Problem, QuadProgTest) {  // NOLINT
     copra::QuadProgDenseSolver qpQuadProg;

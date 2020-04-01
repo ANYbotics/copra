@@ -2,8 +2,8 @@
  * Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
  */
 
-#include "AutoSpan.h"
-#include "debugUtils.h"
+#include "copra/AutoSpan.h"
+#include "copra/debugUtils.h"
 
 namespace copra {
 

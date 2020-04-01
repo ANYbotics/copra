@@ -1,6 +1,7 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2012-2019, CNRS-UM LIRMM, CNRS-AIST JRL
+# Copyright (c) 2012-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+# Copyright (c) 2020 ANYbotics AG
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -57,19 +58,21 @@ catkin_package(
 ###########
 
 add_library(${PROJECT_NAME}
-  # src/GUROBISolver.cpp  # commercial solver
-  # src/LSSOLSolver.cpp  # also commercial
-  # src/OSQPSolver.cpp  # we can add this interface by importing https://github.com/jrl-umi3218/eigen-osqp
+  # src/solvers/GUROBISolver.cpp  # commercial solver
+  # src/solvers/LSSOLSolver.cpp  # also commercial
+  # src/solvers/OSQPSolver.cpp  # we can add this interface by importing https://github.com/jrl-umi3218/eigen-osqp
   src/AutoSpan.cpp
   src/LMPC.cpp
-  src/PreviewSystem.cpp
-  src/QLDSolver.cpp
-  src/QuadProgSolver.cpp
   src/SolverInterface.cpp
   src/constraints.cpp
   src/costFunctions.cpp
   src/debugUtils.cpp
-  src/solverUtils.cpp
+  src/solvers/QLDSolver.cpp
+  src/solvers/QuadProgSolver.cpp
+  src/solvers/utils.cpp
+  src/systems/System.cpp
+  src/systems/TimeInvariantSystem.cpp
+  src/systems/TimeVariantSystem.cpp
 )
 
 add_dependencies(${PROJECT_NAME}
@@ -84,10 +87,12 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
-  include/${PROJECT_NAME}
-  SYSTEM    # Libraries listed after 'SYSTEM' are marked as external, and don't generate warnings.
-    ${catkin_INCLUDE_DIRS}
-    ${EIGEN3_INCLUDE_DIR}
+  include
+)
+
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
+  ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -123,8 +128,9 @@ if(CATKIN_ENABLE_TESTING)
   )
 
   catkin_add_gtest(test_${PROJECT_NAME}
-    test/TestLMPC.cpp
     test/TestSolvers.cpp
+    test/TestTimeInvariantSystems.cpp
+    test/TestTimeVariantSystems.cpp
     test/main.cpp
     test/tools.cpp
   )
@@ -143,10 +149,12 @@ if(TARGET test_${PROJECT_NAME})
   )
 
   target_include_directories(test_${PROJECT_NAME} PRIVATE
-    include/${PROJECT_NAME}
-    SYSTEM
-      ${catkin_INCLUDE_DIRS}
-      ${EIGEN3_INCLUDE_DIR}
+    include
+    )
+
+  target_include_directories(test_${PROJECT_NAME} SYSTEM PUBLIC
+    ${catkin_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
   )
 
   find_package(cmake_code_coverage QUIET)

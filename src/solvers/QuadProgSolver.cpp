@@ -1,9 +1,11 @@
 /*
  * Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+ * Copyright 2020 ANYbotics AG
  */
 
-#include "QuadProgSolver.h"
 #include <iostream>
+
+#include "copra/solvers/QuadProgSolver.h"
 
 namespace copra {
 
@@ -71,4 +73,4 @@ bool QuadProgDenseSolver::SI_solve(const Eigen::MatrixXd& Q, const Eigen::Vector
     return solver_.solve(Q, c, Aeq, beq, ineqMat, ineqVec);
 }
 
-} // namespace pc
+} // namespace copra

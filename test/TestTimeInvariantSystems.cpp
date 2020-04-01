@@ -1,42 +1,35 @@
 /*
  * Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+ * Copyright 2020 ANYbotics AG
  */
 
-#include "systems.h"
-#include "tools.h"
-#include <Eigen/Core>
 #include <algorithm>
-#include "LMPC.h"
-#include "PreviewSystem.h"
-#include "constraints.h"
-#include "costFunctions.h"
-#include "QuadProgSolver.h"
-#ifdef EIGEN_QLD_FOUND
-#include "QLDSolver.h"
-#endif
-#ifdef EIGEN_LSSOL_FOUND
-#include "LSSOLSolver.h"
-#endif
-#ifdef EIGEN_GUROBI_FOUND
-#include "GUROBISolver.h"
-#endif
-#ifdef EIGEN_OSQP_FOUND
-#include "OSQPSolver.h"
-#endif
-
 #include <memory>
 #include <numeric>
 #include <vector>
 
+#include <Eigen/Core>
+
 #include <gtest/gtest.h>
+
+#include "copra/LMPC.h"
+#include "copra/constraints.h"
+#include "copra/costFunctions.h"
+#include "copra/solvers/all.h"
+#include "copra/systems/TimeInvariantSystem.h"
+
+#include "time_invariant_systems.h"
+#include "tools.h"
 
 /********************************************************************************************************
  *                               Check Bound constraint                                                 *
  ********************************************************************************************************/
 
 TEST_F(BoundedSystem, mpcTargetCostWithBoundConstraints) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
+    ps->update();
+
     auto controller = copra::LMPC(ps);
     auto xCost = std::make_shared<copra::TargetCost>(M, xd);
     auto uCost = std::make_shared<copra::ControlCost>(N, ud);
@@ -50,12 +43,12 @@ TEST_F(BoundedSystem, mpcTargetCostWithBoundConstraints) {  // NOLINT
     controller.addConstraint(trajConstr);
     controller.addConstraint(contConstr);
 
-    auto pcCheck = [&](const std::string& solverName, copra::SolverFlag sFlag, std::unique_ptr<copra::SolverInterface>&& solver = nullptr) {
-        if (solver)
+    auto pcCheck = [&](const std::string& /* solverName */, copra::SolverFlag sFlag, std::unique_ptr<copra::SolverInterface>&& solver = nullptr) {
+        if (solver) {
             controller.useSolver(std::move(solver));
-        else
+        } else {
             controller.selectQPSolver(sFlag);
-
+        }
         ASSERT_TRUE(controller.solve());
 
         Eigen::VectorXd fullTraj = controller.trajectory();
@@ -71,7 +64,7 @@ TEST_F(BoundedSystem, mpcTargetCostWithBoundConstraints) {  // NOLINT
         // Check result
         EXPECT_LE(std::abs(xd(1) - velTraj.tail(1)(0)), 0.001);
 
-        // Check constrains
+        // Check constraints
         ASSERT_LE(posTraj.maxCoeff(), x0(0));
         ASSERT_LE(velTraj.maxCoeff(), xUpper(1) + 1e-6);
         ASSERT_LE(control.maxCoeff(), uUpper(0) + 1e-6);
@@ -90,8 +83,8 @@ TEST_F(BoundedSystem, mpcTargetCostWithBoundConstraints) {  // NOLINT
 }
 
 TEST_F(BoundedSystem, mpcTrajectoryCostWithBoundConstraints) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
     auto xCost = std::make_shared<copra::TrajectoryCost>(M, xd);
     auto uCost = std::make_shared<copra::ControlCost>(N, ud);
@@ -105,7 +98,7 @@ TEST_F(BoundedSystem, mpcTrajectoryCostWithBoundConstraints) {  // NOLINT
     controller.addConstraint(trajConstr);
     controller.addConstraint(contConstr);
 
-    auto pcCheck = [&](const std::string& solverName, copra::SolverFlag sFlag, std::unique_ptr<copra::SolverInterface>&& solver = nullptr) {
+    auto pcCheck = [&](const std::string& /* solverName */, copra::SolverFlag sFlag, std::unique_ptr<copra::SolverInterface>&& solver = nullptr) {
         if (solver)
             controller.useSolver(std::move(solver));
         else
@@ -135,11 +128,18 @@ TEST_F(BoundedSystem, mpcTrajectoryCostWithBoundConstraints) {  // NOLINT
         }
         Eigen::VectorXd control = controller.control();
 
+        // Check system dynamics on full solution
+        for (int k = 0; 2 * (k + 1) + 1 < trajLen; k++) {
+            Eigen::VectorXd x_k = fullTraj.segment<2>(2 * k);
+            Eigen::VectorXd x_next = fullTraj.segment<2>(2 * (k + 1));
+            ASSERT_LE((x_next - A * x_k - B * control(k) - c).norm(), 1e-10);
+        }
+
         // Check result
         EXPECT_LE(std::abs(xd(1) - velTraj.tail(1)(0)), 0.001);
 
-        // Check constrains
-        ASSERT_LE(posTraj.maxCoeff(), x0(0));
+        // Check constraints
+        ASSERT_LE(posTraj.maxCoeff(), x0(0));  // actually not an explicit constraint
         ASSERT_LE(velTraj.maxCoeff(), xUpper(1) + 1e-6);
         ASSERT_LE(control.maxCoeff(), uUpper(0) + 1e-6); // QuadProg allows to exceeds the constrain of a small amount.
     };
@@ -157,8 +157,8 @@ TEST_F(BoundedSystem, mpcTrajectoryCostWithBoundConstraints) {  // NOLINT
 }
 
 TEST_F(BoundedSystem, mpcMixedCostWithBoundConstraints) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
     auto xCost = std::make_shared<copra::MixedCost>(M, Eigen::MatrixXd::Zero(2, 1), xd); // min(||X - Xt||^2)
     auto uCost = std::make_shared<copra::MixedCost>(Eigen::MatrixXd::Zero(1, 2), N, ud); // min(||U - Ut||^2)
@@ -184,6 +184,13 @@ TEST_F(BoundedSystem, mpcMixedCostWithBoundConstraints) {  // NOLINT
     }
     Eigen::VectorXd control = controller.control();
 
+    // Check system dynamics on full solution
+    for (int k = 0; 2 * (k + 1) + 1 < trajLen; k++) {
+        Eigen::VectorXd x_k = fullTraj.segment<2>(2 * k);
+        Eigen::VectorXd x_next = fullTraj.segment<2>(2 * (k + 1));
+        ASSERT_LE((x_next - A * x_k - B * control(k) - c).norm(), 1e-10);
+    }
+
     // Check result
     EXPECT_LE(std::abs(xd(1) - velTraj.tail(3)(0)), 0.001); // Check X_{N-1} for mixed cost because X_N is not evaluated.
 
@@ -198,8 +205,8 @@ TEST_F(BoundedSystem, mpcMixedCostWithBoundConstraints) {  // NOLINT
  ********************************************************************************************************/
 
 TEST_F(IneqSystem, mpcTargetCostWithInequalityConstraints) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
     auto xCost = std::make_shared<copra::TargetCost>(M, xd);
     auto uCost = std::make_shared<copra::ControlCost>(N, ud);
@@ -213,7 +220,7 @@ TEST_F(IneqSystem, mpcTargetCostWithInequalityConstraints) {  // NOLINT
     controller.addConstraint(trajConstr);
     controller.addConstraint(contConstr);
 
-    auto pcCheck = [&](const std::string& solverName, copra::SolverFlag sFlag, std::unique_ptr<copra::SolverInterface>&& solver = nullptr) {
+    auto pcCheck = [&](const std::string& /* solverName */, copra::SolverFlag sFlag, std::unique_ptr<copra::SolverInterface>&& solver = nullptr) {
         if (solver)
             controller.useSolver(std::move(solver));
         else
@@ -267,8 +274,8 @@ TEST_F(IneqSystem, mpcTargetCostWithInequalityConstraints) {  // NOLINT
 }
 
 TEST_F(IneqSystem, mpcTrajectoryCostWithInequalityConstraints) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
     auto xCost = std::make_shared<copra::TrajectoryCost>(M, xd);
     auto uCost = std::make_shared<copra::ControlCost>(N, ud);
@@ -282,7 +289,7 @@ TEST_F(IneqSystem, mpcTrajectoryCostWithInequalityConstraints) {  // NOLINT
     controller.addConstraint(trajConstr);
     controller.addConstraint(contConstr);
 
-    auto pcCheck = [&](const std::string& solverName, copra::SolverFlag sFlag, std::unique_ptr<copra::SolverInterface>&& solver = nullptr) {
+    auto pcCheck = [&](const std::string& /* solverName */, copra::SolverFlag sFlag, std::unique_ptr<copra::SolverInterface>&& solver = nullptr) {
         if (solver)
             controller.useSolver(std::move(solver));
         else
@@ -334,8 +341,8 @@ TEST_F(IneqSystem, mpcTrajectoryCostWithInequalityConstraints) {  // NOLINT
 }
 
 TEST_F(IneqSystem, mpcMixedCostWithInequalityConstraints) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
     auto xCost = std::make_shared<copra::MixedCost>(M, Eigen::MatrixXd::Zero(2, 1), xd);
     auto uCost = std::make_shared<copra::MixedCost>(Eigen::MatrixXd::Zero(1, 2), N, ud);
@@ -375,8 +382,8 @@ TEST_F(IneqSystem, mpcMixedCostWithInequalityConstraints) {  // NOLINT
  ********************************************************************************************************/
 
 TEST_F(MixedSystem, mpcTargetCostWithMixedConstraints) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
     auto xCost = std::make_shared<copra::TargetCost>(M, xd);
     auto uCost = std::make_shared<copra::ControlCost>(N, ud);
@@ -388,7 +395,7 @@ TEST_F(MixedSystem, mpcTargetCostWithMixedConstraints) {  // NOLINT
     controller.addCost(uCost);
     controller.addConstraint(mixedConstr);
 
-    auto pcCheck = [&](const std::string& solverName, copra::SolverFlag sFlag, std::unique_ptr<copra::SolverInterface>&& solver = nullptr) {
+    auto pcCheck = [&](const std::string& /* solverName */, copra::SolverFlag sFlag, std::unique_ptr<copra::SolverInterface>&& solver = nullptr) {
         if (solver)
             controller.useSolver(std::move(solver));
         else
@@ -432,8 +439,8 @@ TEST_F(MixedSystem, mpcTargetCostWithMixedConstraints) {  // NOLINT
 }
 
 TEST_F(MixedSystem, mpcTrajectoryCostWithMixedConstraints) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
     auto xCost = std::make_shared<copra::TrajectoryCost>(M, xd);
     auto uCost = std::make_shared<copra::ControlCost>(N, ud);
@@ -445,7 +452,7 @@ TEST_F(MixedSystem, mpcTrajectoryCostWithMixedConstraints) {  // NOLINT
     controller.addCost(uCost);
     controller.addConstraint(mixedConstr);
 
-    auto pcCheck = [&](const std::string& solverName, copra::SolverFlag sFlag, std::unique_ptr<copra::SolverInterface>&& solver = nullptr) {
+    auto pcCheck = [&](const std::string& /* solverName */, copra::SolverFlag sFlag, std::unique_ptr<copra::SolverInterface>&& solver = nullptr) {
         if (solver)
             controller.useSolver(std::move(solver));
         else
@@ -489,8 +496,8 @@ TEST_F(MixedSystem, mpcTrajectoryCostWithMixedConstraints) {  // NOLINT
 }
 
 TEST_F(MixedSystem, mpcMixedCostWithMixedConstraints) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
     auto xCost = std::make_shared<copra::MixedCost>(M, Eigen::MatrixXd::Zero(2, 1), xd);
     auto uCost = std::make_shared<copra::MixedCost>(Eigen::MatrixXd::Zero(1, 2), N, ud);
@@ -532,8 +539,8 @@ TEST_F(MixedSystem, mpcMixedCostWithMixedConstraints) {  // NOLINT
  ********************************************************************************************************/
 
 TEST_F(EqSystem, mpcTargetCostWithEqualityConstraints) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
     auto xCost = std::make_shared<copra::TargetCost>(M, xd);
     auto uCost = std::make_shared<copra::ControlCost>(N, ud);
@@ -545,7 +552,7 @@ TEST_F(EqSystem, mpcTargetCostWithEqualityConstraints) {  // NOLINT
     controller.addCost(uCost);
     controller.addConstraint(trajConstr);
 
-    auto pcCheck = [&](const std::string& solverName, copra::SolverFlag sFlag, std::unique_ptr<copra::SolverInterface>&& solver = nullptr) {
+    auto pcCheck = [&](const std::string& /* solverName */, copra::SolverFlag sFlag, std::unique_ptr<copra::SolverInterface>&& solver = nullptr) {
         if (solver)
             controller.useSolver(std::move(solver));
         else
@@ -602,8 +609,8 @@ TEST_F(EqSystem, mpcTargetCostWithEqualityConstraints) {  // NOLINT
 }
 
 TEST_F(EqSystem, mpcTrajectoryCostWithEqualityConstraints) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
     auto xCost = std::make_shared<copra::TrajectoryCost>(M, xd);
     auto uCost = std::make_shared<copra::ControlCost>(N, ud);
@@ -615,7 +622,7 @@ TEST_F(EqSystem, mpcTrajectoryCostWithEqualityConstraints) {  // NOLINT
     controller.addCost(uCost);
     controller.addConstraint(trajConstr);
 
-    auto pcCheck = [&](const std::string& solverName, copra::SolverFlag sFlag, std::unique_ptr<copra::SolverInterface>&& solver = nullptr) {
+    auto pcCheck = [&](const std::string& /* solverName */, copra::SolverFlag sFlag, std::unique_ptr<copra::SolverInterface>&& solver = nullptr) {
         if (solver)
             controller.useSolver(std::move(solver));
         else
@@ -659,8 +666,8 @@ TEST_F(EqSystem, mpcTrajectoryCostWithEqualityConstraints) {  // NOLINT
 }
 
 TEST_F(EqSystem, mpcMixedCostWithEqualityConstraints) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
     auto xCost = std::make_shared<copra::MixedCost>(M, Eigen::MatrixXd::Zero(2, 1), xd);
     auto uCost = std::make_shared<copra::MixedCost>(Eigen::MatrixXd::Zero(1, 2), N, ud);
@@ -697,8 +704,8 @@ TEST_F(EqSystem, mpcMixedCostWithEqualityConstraints) {  // NOLINT
  ********************************************************************************************************/
 
 TEST_F(BoundedSystem, checkAutospanAndWholeMatrixOnBoundConstraint) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
     int nbXStep = nbStep + 1;
 
@@ -725,8 +732,8 @@ TEST_F(BoundedSystem, checkAutospanAndWholeMatrixOnBoundConstraint) {  // NOLINT
 }
 
 TEST_F(IneqSystem, checkAutospanAndWholeMatrixOnInequalityConstraint) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
     int nbXStep = nbStep + 1;
 
@@ -753,8 +760,8 @@ TEST_F(IneqSystem, checkAutospanAndWholeMatrixOnInequalityConstraint) {  // NOLI
 }
 
 TEST_F(MixedSystem, checkAutospanAndWholeMatrixOnMixedConstraint) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
 
     auto checkSpan = [&](const Eigen::MatrixXd& E, const Eigen::MatrixXd& G, const Eigen::VectorXd& p) {
@@ -782,8 +789,8 @@ TEST_F(MixedSystem, checkAutospanAndWholeMatrixOnMixedConstraint) {  // NOLINT
 }
 
 TEST_F(IneqSystem, checkAutospanAndWholeMatrixOnTrajectoryCost) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
     int nbXStep = nbStep + 1;
 
@@ -805,8 +812,8 @@ TEST_F(IneqSystem, checkAutospanAndWholeMatrixOnTrajectoryCost) {  // NOLINT
 }
 
 TEST_F(IneqSystem, checkAutospanAndWholeMatrixOnControlCost) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
 
     auto checkSpan = [&](const Eigen::MatrixXd& M, const Eigen::VectorXd& p, const Eigen::VectorXd& weights) {
@@ -827,8 +834,8 @@ TEST_F(IneqSystem, checkAutospanAndWholeMatrixOnControlCost) {  // NOLINT
 }
 
 TEST_F(IneqSystem, checkAutospanAndWholeMatrixOnMixedCost) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
 
     auto checkSpan = [&](const Eigen::MatrixXd& M, const Eigen::MatrixXd& N, const Eigen::VectorXd& p, const Eigen::VectorXd& weights) {
@@ -859,18 +866,18 @@ TEST_F(IneqSystem, checkAutospanAndWholeMatrixOnMixedCost) {  // NOLINT
  *                                Check Error Messages                                                  *
  ********************************************************************************************************/
 
-TEST_F(IneqSystem, errorHandlerForPreviewSystem) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ASSERT_THROW(ps->system(Eigen::MatrixXd::Ones(5, 2), B, c, x0, nbStep), std::domain_error);
-    ASSERT_THROW(ps->system(Eigen::MatrixXd::Ones(2, 5), B, c, x0, nbStep), std::domain_error);
-    ASSERT_THROW(ps->system(A, Eigen::MatrixXd::Ones(5, 1), c, x0, nbStep), std::domain_error);
-    ASSERT_THROW(ps->system(A, B, Eigen::VectorXd::Ones(5), x0, nbStep), std::domain_error);
-    ASSERT_THROW(ps->system(A, B, c, x0, -1), std::domain_error);
+TEST_F(IneqSystem, errorHandlerForSystem) {  // NOLINT
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ASSERT_THROW(ps->reset(Eigen::MatrixXd::Ones(5, 2), B, c, x0, nbStep), std::domain_error);
+    ASSERT_THROW(ps->reset(Eigen::MatrixXd::Ones(2, 5), B, c, x0, nbStep), std::domain_error);
+    ASSERT_THROW(ps->reset(A, Eigen::MatrixXd::Ones(5, 1), c, x0, nbStep), std::domain_error);
+    ASSERT_THROW(ps->reset(A, B, Eigen::VectorXd::Ones(5), x0, nbStep), std::domain_error);
+    ASSERT_THROW(ps->reset(A, B, c, x0, -1), std::domain_error);
 }
 
 TEST_F(IneqSystem, errorHandlerForWeigths) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
     auto cost = std::make_shared<copra::TrajectoryCost>(M, xd);
 
@@ -882,7 +889,7 @@ TEST_F(IneqSystem, errorHandlerForWeigths) {  // NOLINT
 }
 
 TEST_F(IneqSystem, errorHandlerForTrajectoryCost) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
 
     auto badCost1 = std::make_shared<copra::TrajectoryCost>(Eigen::MatrixXd::Identity(5, 5), Eigen::VectorXd::Ones(2));
@@ -892,7 +899,7 @@ TEST_F(IneqSystem, errorHandlerForTrajectoryCost) {  // NOLINT
 }
 
 TEST_F(IneqSystem, errorHandlerForTargetCost) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
 
     auto badCost1 = std::make_shared<copra::TargetCost>(Eigen::MatrixXd::Identity(5, 5), Eigen::VectorXd::Ones(2));
@@ -902,7 +909,7 @@ TEST_F(IneqSystem, errorHandlerForTargetCost) {  // NOLINT
 }
 
 TEST_F(IneqSystem, errorHandlerForControlCost) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
 
     auto badCost1 = std::make_shared<copra::ControlCost>(Eigen::MatrixXd::Identity(5, 5), Eigen::VectorXd::Ones(2));
@@ -912,7 +919,7 @@ TEST_F(IneqSystem, errorHandlerForControlCost) {  // NOLINT
 }
 
 TEST_F(IneqSystem, errorHandlerForMixedCost) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
 
     auto badCost1 = std::make_shared<copra::MixedCost>(Eigen::MatrixXd::Identity(5, 5), Eigen::MatrixXd::Identity(2, 1), Eigen::VectorXd::Ones(2));
@@ -924,8 +931,8 @@ TEST_F(IneqSystem, errorHandlerForMixedCost) {  // NOLINT
 }
 
 TEST_F(IneqSystem, errorHandlerForTrajectoryConstraint) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
 
     auto badConstr = std::make_shared<copra::TrajectoryConstraint>(Eigen::MatrixXd::Identity(5, 5), Eigen::VectorXd::Ones(2));
@@ -935,8 +942,8 @@ TEST_F(IneqSystem, errorHandlerForTrajectoryConstraint) {  // NOLINT
 }
 
 TEST_F(IneqSystem, errorHandlerForControlConstraint) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
 
     auto badConstr1 = std::make_shared<copra::ControlConstraint>(Eigen::MatrixXd::Identity(5, 5), Eigen::VectorXd::Ones(2));
@@ -950,8 +957,8 @@ TEST_F(IneqSystem, errorHandlerForControlConstraint) {  // NOLINT
 }
 
 TEST_F(IneqSystem, errorHandlerForMixedConstraint) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
 
     auto badConstr1 = std::make_shared<copra::MixedConstraint>(Eigen::MatrixXd::Identity(5, 5), Eigen::MatrixXd::Identity(2, 1), Eigen::VectorXd::Ones(2));
@@ -963,8 +970,8 @@ TEST_F(IneqSystem, errorHandlerForMixedConstraint) {  // NOLINT
 }
 
 TEST_F(BoundedSystem, errorHandlerForTrajectoryBoundConstraint) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
 
     auto badConstr = std::make_shared<copra::TrajectoryBoundConstraint>(Eigen::VectorXd::Ones(3), Eigen::VectorXd::Ones(2));
@@ -974,8 +981,8 @@ TEST_F(BoundedSystem, errorHandlerForTrajectoryBoundConstraint) {  // NOLINT
 }
 
 TEST_F(BoundedSystem, errorHandlerForControlBoundConstraint) {  // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>();
-    ps->system(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
 
     auto badConstr1 = std::make_shared<copra::ControlBoundConstraint>(Eigen::VectorXd::Ones(3), Eigen::VectorXd::Ones(2));
@@ -993,7 +1000,7 @@ TEST_F(BoundedSystem, errorHandlerForControlBoundConstraint) {  // NOLINT
  ********************************************************************************************************/
 
 TEST_F(IneqSystem, removeCostAndConstraint) { // NOLINT
-    auto ps = std::make_shared<copra::PreviewSystem>(A, B, c, x0, nbStep);
+    auto ps = std::make_shared<copra::TimeInvariantSystem>(A, B, c, x0, nbStep);
     auto controller = copra::LMPC(ps);
     {
         auto xCost = std::make_shared<copra::TargetCost>(M, xd);
@@ -1012,4 +1019,71 @@ TEST_F(IneqSystem, removeCostAndConstraint) { // NOLINT
         controller.removeConstraint(contConstr);
     }
     ASSERT_TRUE(controller.solve());
+}
+
+TEST_F(SmallSystem, solveSmallSystem) {  // NOLINT
+  auto ps = std::make_shared<copra::TimeInvariantSystem>();
+  ps->reset(A, B, c, x0, nbStep);
+  ps->update();
+
+  auto controller = copra::LMPC(ps);
+  auto xCost = std::make_shared<copra::TargetCost>(M, xd);
+  auto uCost = std::make_shared<copra::ControlCost>(N, ud);
+  auto trajConstr = std::make_shared<copra::TrajectoryBoundConstraint>(xLower, xUpper);
+  auto contConstr = std::make_shared<copra::ControlBoundConstraint>(uLower, uUpper);
+  xCost->weights(wx);
+  uCost->weights(wu);
+
+  controller.addCost(xCost);
+  controller.addCost(uCost);
+  controller.addConstraint(trajConstr);
+  controller.addConstraint(contConstr);
+
+  auto pcCheck = [&](const std::string& /* solverName */, copra::SolverFlag sFlag, std::unique_ptr<copra::SolverInterface>&& solver = nullptr) {
+    if (solver) {
+      controller.useSolver(std::move(solver));
+    } else {
+      controller.selectQPSolver(sFlag);
+    }
+    ASSERT_TRUE(controller.solve());
+
+    Eigen::VectorXd trajectory = controller.trajectory();
+    ASSERT_LE((trajectory - expectedTrajectory).norm(), 1e-4);
+
+    auto trajLen = trajectory.rows() / 2;
+    Eigen::VectorXd posTraj(trajLen);
+    Eigen::VectorXd velTraj(trajLen);
+    for (auto i = 0; i < trajLen; ++i) {
+      posTraj(i) = trajectory(2 * i);
+      velTraj(i) = trajectory(2 * i + 1);
+    }
+    Eigen::VectorXd control = controller.control();
+    ASSERT_LE((control - expectedControl).norm(), 2e-4);
+
+    // Check system dynamics on full solution
+    for (int k = 0; 2 * (k + 1) + 1 < trajLen; k++) {
+      Eigen::VectorXd x_k = trajectory.segment<2>(2 * k);
+      Eigen::VectorXd x_next = trajectory.segment<2>(2 * (k + 1));
+      ASSERT_LE((x_next - A * x_k - B * control(k) - c).norm(), 1e-10);
+    }
+
+    // Check that terminal condition is fulfilled
+    EXPECT_LE(std::abs(xd(1) - velTraj.tail(1)(0)), 0.001);
+
+    // Check constraints
+    ASSERT_LE(posTraj.maxCoeff(), x0(0));  // actually not an explicit constraint
+    ASSERT_LE(velTraj.maxCoeff(), xUpper(1) + 1e-6);
+    ASSERT_LE(control.maxCoeff(), uUpper(0) + 1e-6);
+  };
+
+  for (auto s : tools::Solvers) {
+    std::unique_ptr<copra::SolverInterface> solver(nullptr);
+#ifdef EIGEN_LSSOL_FOUND
+    if (s.second == copra::SolverFlag::LSSOL) {
+            solver = copra::solverFactory(copra::SolverFlag::LSSOL);
+            solver->SI_maxIter(200);
+        }
+#endif
+    pcCheck(s.first, s.second, std::move(solver));
+  }
 }

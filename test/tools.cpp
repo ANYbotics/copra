@@ -1,10 +1,11 @@
 /*
  * Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+ * Copyright 2020 ANYbotics AG
  */
 
-#include "tools.h"
-
 #include <sstream>
+
+#include "tools.h"
 
 namespace tools {
 

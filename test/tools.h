@@ -1,13 +1,16 @@
 /*
  * Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+ * Copyright 2020 ANYbotics AG
  */
 
 #pragma once
 
-#include "solverUtils.h"
-#include <Eigen/Core>
 #include <utility>
 #include <vector>
+
+#include <Eigen/Core>
+
+#include "copra/solvers/utils.h"
 
 namespace tools {
 

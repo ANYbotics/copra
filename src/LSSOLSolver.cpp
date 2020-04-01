@@ -1,9 +1,11 @@
 /*
  * Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+ * Copyright 2020 ANYbotics AG
  */
 
-#include "LSSOLSolver.h"
 #include <iostream>
+
+#include "copra/LSSOLSolver.h"
 
 namespace copra {
 
@@ -99,4 +101,4 @@ bool LSSOLSolver::SI_solve(const Eigen::MatrixXd& Q, const Eigen::VectorXd& c,
     return solver_.solve(XL, XU, Q_, c, A_, bl_, bu_);
 }
 
-} // namespace pc
+} // namespace copra

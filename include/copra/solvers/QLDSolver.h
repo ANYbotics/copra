@@ -1,47 +1,49 @@
 /*
  * Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+ * Copyright 2020 ANYbotics AG
  */
 
 #pragma once
 
-#include "api.h"
-
-#include "SolverInterface.h"
 #include <Eigen/Core>
-#include <eigen-quadprog/QuadProg.h>
+
+#include <eigen-qld/QLD.h>
+
+#include "copra/api.h"
+#include "copra/SolverInterface.h"
 
 namespace copra {
 
 /**
- * QuadProg solver for dense matrix.
+ * QLD solver for both dense matrix.
  */
-class COPRA_DLLAPI QuadProgDenseSolver : public SolverInterface {
+
+// TODO: Enable sparse matrix
+class COPRA_DLLAPI QLDSolver : public SolverInterface {
 public:
     /**
-     * QuadProgDenseSolver default constructor
-     */
-    QuadProgDenseSolver() = default;
+       * QLDSolver default constructor
+       */
+    QLDSolver();
 
     /**
      * Get information of eventual fail's solver output as define by the
      * solver documentation.
-     * \return 0 No problems
-     * \return 1 The minimization problem has no solution
-     * \return 2 Problems with the decomposition of Q (Is it symmetric positive
-     * definite matrix?)
+     * \return 0 The optimality conditions are satisfied.
+     * \return 1 The algorithm has been stopped after too many iterations.
+     * \return 2 Termination accuracy insufficient to satisfy convergence
+     * criterion.
+     * \return 3 Internal inconsistency of QL, division by zero.
+     * \return 4 Numerical instability prevents successful termination.
+     * \return 5 Length of a working array is too short.
+     * \return >100 Constraints are inconsistent and fail=100+ICON, where ICON
+     * denotes a constraint causing the conflict.
      */
     int SI_fail() const override;
 
-    /**
-     * Get the number of needed iteration if available
-     * \return The number of iteration
-     */
-    int SI_iter() const override;
-
-    /**
-     * Print an information on the current solver status.
-     */
     void SI_inform() const override;
+    void SI_printLevel(int pl) override;
+    void SI_feasibilityTolerance(double tol) override;
 
     /**
      * Get the solver's solution.
@@ -66,10 +68,11 @@ public:
         const Eigen::MatrixXd& Aineq, const Eigen::VectorXd& bineq,
         const Eigen::VectorXd& XL, const Eigen::VectorXd& XU) override;
 
-    Eigen::QuadProgDense& baseSolver() noexcept { return solver_; }
+    Eigen::QLD& baseSolver() noexcept { return solver_; }
 
 private:
-    Eigen::QuadProgDense solver_;
+    Eigen::QLD solver_;
+    double eps_;
 };
 
-} // namespace pc
+} // namespace copra

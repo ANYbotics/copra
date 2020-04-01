@@ -1,29 +1,31 @@
 /*
  * Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+ * Copyright 2020 ANYbotics AG
  */
 
 #pragma once
 
-#include "api.h"
-
-#include "debugUtils.h"
-#include "solverUtils.h"
-#include "typedefs.h"
-#include <Eigen/Core>
 #include <chrono>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include <Eigen/Core>
+
+#include "copra/api.h"
+#include "copra/debugUtils.h"
+#include "copra/solvers/utils.h"
+#include "copra/typedefs.h"
+
 namespace copra {
 
-// Forward declaration
-enum class ConstraintFlag;
-struct PreviewSystem;
+// Forward declarations
 class Constraint;
 class ControlBoundConstraint;
-class EqIneqConstraint;
 class CostFunction;
+class EqIneqConstraint;
+enum class ConstraintFlag;
+struct System;
 
 /**
  * The controller itself.
@@ -43,12 +45,12 @@ public:
      */
     LMPC(SolverFlag sFlag = SolverFlag::DEFAULT);
     /**
-     * Initialize problem variables w.r.t. the PreviewSystem and get the desired
+     * Initialize problem variables w.r.t. the System and get the desired
      * solver
      * \param ps A preview system to amke a copy from.
      * \param sFlag The flag corresponding to the desired solver.
      */
-    LMPC(const std::shared_ptr<PreviewSystem>& ps, SolverFlag sFlag = SolverFlag::DEFAULT);
+    LMPC(const std::shared_ptr<System>& ps, SolverFlag sFlag = SolverFlag::DEFAULT);
 
     /**
      * Select a solver. It will load a solver with default values.
@@ -68,12 +70,12 @@ public:
      * This function needs to be called each time the system dimension changes.
      * \param ps The preview system
      */
-    void initializeController(const std::shared_ptr<PreviewSystem>& ps);
+    void initializeController(const std::shared_ptr<System>& ps);
 
     /**
      * Solve the system.
      * \return True if a solution has been found.
-     * Fill Phi, Psi, xi in PreviewSystem
+     * Fill Phi, Psi, xi in System
      * Fill A, b in Constraints
      */
     bool solve();
@@ -87,7 +89,7 @@ public:
      * Get a reference to the solver if any.
      * \return QP solver currently used.
      */
-    inline SolverInterface& solver() { return *sol_; }
+    inline SolverInterface& solver() { return *solver_; }
     /**
      * Get the solver result.
      * \return The control vector \f$U\f$.
@@ -183,8 +185,8 @@ protected:
     };
 
 protected:
-    std::shared_ptr<PreviewSystem> ps_;
-    std::unique_ptr<SolverInterface> sol_;
+    std::shared_ptr<System> system_;
+    std::unique_ptr<SolverInterface> solver_;
     std::vector<std::shared_ptr<CostFunction>> spCost_;
     Constraints constraints_;
 

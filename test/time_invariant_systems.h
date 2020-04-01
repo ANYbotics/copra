@@ -1,5 +1,6 @@
 /*
  * Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+ * Copyright 2020 ANYbotics AG
  */
 
 #pragma once
@@ -8,7 +9,7 @@
 
 #include <gtest/gtest.h>
 
-// Test base on scilab qld example:
+// Test based on scilab qld example:
 // https://help.scilab.org/doc/5.5.2/en_US/qld.html
 class Problem : public ::testing::Test {
   protected:
@@ -41,8 +42,16 @@ class Problem : public ::testing::Test {
     int nrvars, nreqs, nrineqs;
 };
 
-// The final point of the trajectory should be [val, 0] where val can be any value inferior to 0;
-// Test bound constraints
+/*
+ * Point-mass under gravity with external force input:
+ *
+ * p(k + 1) = p(k) + v(k) * T + (u / m + g) * T^2 / 2
+ * v(k + 1) = v(k) + (u / m + g) * T
+ *
+ * The system is constrained by: u(k) <= u_max and v(k) <= 0.
+ *
+ * \note The final point of the trajectory should be [val, 0] where val can be any value less than 0;
+ */
 class BoundedSystem : public ::testing::Test {
   protected:
     BoundedSystem()
@@ -95,7 +104,7 @@ class BoundedSystem : public ::testing::Test {
     Eigen::VectorXd c, uLower, uUpper, xLower, xUpper, x0, xd, ud, wx, wu;
 };
 
-// The final point of the trajectory should be [val, 0] where val can be any value inferior to 0 (same as previous one)
+// The final point of the trajectory should be [val, 0] where val can be any value less than 0 (same as previous one)
 // Test inequality constraints
 class IneqSystem : public ::testing::Test {
   protected:
@@ -144,7 +153,7 @@ class IneqSystem : public ::testing::Test {
     Eigen::VectorXd c, h, p, x0, xd, ud, wx, wu;
 };
 
-// The final point of the trajectory should be [val, 0] where val can be any value inferior to 0 (same as previous one)
+// The final point of the trajectory should be [val, 0] where val can be any value less than 0 (same as previous one)
 // Test mixed constraints
 class MixedSystem : public ::testing::Test {
   protected:
@@ -238,4 +247,75 @@ class EqSystem : public ::testing::Test {
     int nbStep;
     Eigen::MatrixXd A, B, E, M, N;
     Eigen::VectorXd c, p, x0, xd, ud, wx, wu;
+};
+
+/*
+ * Point-mass under gravity with external force input:
+ *
+ * p(k + 1) = p(k) + v(k) * T + (u / m + g) * T^2 / 2
+ * v(k + 1) = v(k) + (u / m + g) * T
+ *
+ * The system is constrained by u(k) <= u_max and v(k) <= 0.
+ *
+ * \note The final point of the trajectory should be [val, 0] where val can be any value less than 0;
+ */
+class SmallSystem : public ::testing::Test {
+ protected:
+  SmallSystem()
+      : T(0.005)
+      , mass(5)
+      , nbStep(10)
+      , A(2, 2)
+      , B(2, 1)
+      , M(2, 2)
+      , N(1, 1)
+      , c(2)
+      , uLower(1)
+      , uUpper(1)
+      , xLower(2)
+      , xUpper(2)
+      , x0(2)
+      , xd(2)
+      , ud(1)
+      , wx(2)
+      , wu(1)
+  {
+    // System
+    A << 1, T, 0, 1;
+    B << 0.5 * T * T / mass, T / mass;
+    c << (-9.81 / 2.) * T * T, -9.81 * T;
+    x0 << 0, -1.5;
+    wx << 10, 10000;
+    wu << 1e-4;
+
+    // Cost
+    M << 1, 0, 0, 1;
+    N << 1;
+    xd << 0, -1;
+    ud << 2;
+
+    // Control bound
+    uLower.setConstant(-std::numeric_limits<double>::infinity());
+    uUpper.setConstant(200); // The force can't be superior to 200
+
+    // Trajectory bound
+    xLower.setConstant(-std::numeric_limits<double>::infinity());
+    xUpper(0) = std::numeric_limits<double>::infinity();
+    xUpper(1) = 0; // The velocity can't be positive
+
+    // Expected solution, computed once by solving the MPC problem
+    expectedTrajectory.resize(2 * (nbStep + 1));
+    expectedTrajectory << 0, -1.5, -0.0073749, -1.44996, -0.0144997, -1.39995, -0.0213745, -1.34997, -0.0279994, -1.30002, -0.0343747,
+        -1.2501, -0.0405005, -1.20022, -0.046377, -1.15036, -0.0520042, -1.10053, -0.0573824, -1.05074, -0.0625117, -1.00098;
+    expectedControl.resize(nbStep);
+    expectedControl << 99.0915, 99.0605, 99.0296, 98.9986, 98.9677, 98.9367, 98.9058, 98.8748, 98.8439, 98.813;
+  }
+
+ protected:
+  double T, mass;
+  int nbStep;
+  Eigen::MatrixXd A, B, M, N;
+  Eigen::VectorXd c, uLower, uUpper, xLower, xUpper, x0, xd, ud, wx, wu;
+  Eigen::VectorXd expectedTrajectory;
+  Eigen::VectorXd expectedControl;
 };

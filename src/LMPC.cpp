@@ -1,14 +1,16 @@
 /*
  * Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+ * Copyright 2020 ANYbotics AG
  */
 
-#include "LMPC.h"
-#include "PreviewSystem.h"
-#include "constraints.h"
-#include "costFunctions.h"
 #include <algorithm>
 #include <exception>
 #include <numeric>
+
+#include "copra/LMPC.h"
+#include "copra/constraints.h"
+#include "copra/costFunctions.h"
+#include "copra/systems/System.h"
 
 namespace copra {
 
@@ -51,8 +53,9 @@ void LMPC::Constraints::clear()
  *************************************************************************************************/
 
 LMPC::LMPC(SolverFlag sFlag)
-    : ps_(nullptr)
-    , sol_(solverFactory(sFlag))
+    : system_(nullptr)
+    ,
+      solver_(solverFactory(sFlag))
     , constraints_()
     , Q_()
     , Aineq_()
@@ -67,18 +70,19 @@ LMPC::LMPC(SolverFlag sFlag)
 {
 }
 
-LMPC::LMPC(const std::shared_ptr<PreviewSystem>& ps, SolverFlag sFlag)
-    : ps_(ps)
-    , sol_(solverFactory(sFlag))
+LMPC::LMPC(const std::shared_ptr<System>& ps, SolverFlag sFlag)
+    : system_(ps)
+    ,
+      solver_(solverFactory(sFlag))
     , constraints_()
-    , Q_(ps_->fullUDim, ps_->fullUDim)
-    , Aineq_(0, ps_->fullUDim)
-    , Aeq_(0, ps_->fullUDim)
-    , c_(ps_->fullUDim)
+    , Q_(system_->fullUDim, system_->fullUDim)
+    , Aineq_(0, system_->fullUDim)
+    , Aeq_(0, system_->fullUDim)
+    , c_(system_->fullUDim)
     , bineq_()
     , beq_()
-    , lb_(ps_->fullUDim)
-    , ub_(ps_->fullUDim)
+    , lb_(system_->fullUDim)
+    , ub_(system_->fullUDim)
     , solveTime_()
     , solveAndBuildTime_()
 {
@@ -88,21 +92,21 @@ LMPC::LMPC(const std::shared_ptr<PreviewSystem>& ps, SolverFlag sFlag)
 
 void LMPC::selectQPSolver(SolverFlag flag)
 {
-    sol_ = solverFactory(flag);
+  solver_ = solverFactory(flag);
 }
 
 void LMPC::useSolver(std::unique_ptr<SolverInterface>&& solver)
 {
-    sol_ = std::move(solver);
+  solver_ = std::move(solver);
 }
 
-void LMPC::initializeController(const std::shared_ptr<PreviewSystem>& ps)
+void LMPC::initializeController(const std::shared_ptr<System>& ps)
 {
-    ps_ = ps;
+  system_ = ps;
     clearConstraintMatrices();
 
-    Q_.resize(ps_->fullUDim, ps_->fullUDim);
-    c_.resize(ps_->fullUDim);
+    Q_.resize(system_->fullUDim, system_->fullUDim);
+    c_.resize(system_->fullUDim);
 }
 
 bool LMPC::solve()
@@ -111,13 +115,10 @@ bool LMPC::solve()
     auto sabTime = high_resolution_clock::now();
 
     updateSystem();
-    // TODO: Need to be rewrite to minimize building time accross the solvers.
-    // It will be better to directly build all matrices in the solvers.
     makeQPForm();
-    sol_->SI_problem(ps_->fullUDim, constraints_.nrEqConstr, constraints_.nrIneqConstr);
-
+    solver_->SI_problem(system_->fullUDim, constraints_.nrEqConstr, constraints_.nrIneqConstr);
     auto sTime = high_resolution_clock::now();
-    bool success = sol_->SI_solve(Q_, c_, Aeq_, beq_, Aineq_, bineq_, lb_, ub_);
+    bool success = solver_->SI_solve(Q_, c_, Aeq_, beq_, Aineq_, bineq_, lb_, ub_);
     solveTime_ = duration_cast<duration<double>>(high_resolution_clock::now() - sTime);
 
     checkDeleteCostsAndConstraints();
@@ -128,17 +129,17 @@ bool LMPC::solve()
 
 void LMPC::inform() const noexcept
 {
-    sol_->SI_inform();
+    solver_->SI_inform();
 }
 
 const Eigen::VectorXd& LMPC::control() const noexcept
 {
-    return sol_->SI_result();
+    return solver_->SI_result();
 }
 
 Eigen::VectorXd LMPC::trajectory() const noexcept
 {
-    return ps_->Phi * ps_->x0 + ps_->Psi * control() + ps_->xi;
+    return system_->Phi * system_->x0 + system_->Psi * control() + system_->xi;
 }
 
 double LMPC::solveTime() const noexcept
@@ -153,13 +154,13 @@ double LMPC::solveAndBuildTime() const noexcept
 
 void LMPC::addCost(const std::shared_ptr<CostFunction>& costFun)
 {
-    costFun->initializeCost(*ps_);
+    costFun->initializeCost(*system_);
     spCost_.emplace_back(costFun);
 }
 
 void LMPC::addConstraint(const std::shared_ptr<Constraint>& constr)
 {
-    constr->initializeConstraint(*ps_);
+    constr->initializeConstraint(*system_);
     addConstraintByType(constr);
 }
 
@@ -228,14 +229,14 @@ void LMPC::addConstraintByType(const std::shared_ptr<Constraint>& constr)
 
 void LMPC::clearConstraintMatrices()
 {
-    assert(ps_ != nullptr);
+    assert(system_ != nullptr);
 
-    Aineq_.resize(0, ps_->fullUDim);
-    Aeq_.resize(0, ps_->fullUDim);
+    Aineq_.resize(0, system_->fullUDim);
+    Aeq_.resize(0, system_->fullUDim);
     bineq_.resize(0);
     beq_.resize(0);
-    lb_.resize(ps_->fullUDim);
-    ub_.resize(ps_->fullUDim);
+    lb_.resize(system_->fullUDim);
+    ub_.resize(system_->fullUDim);
     lb_.setConstant(-std::numeric_limits<double>::max());
     ub_.setConstant(std::numeric_limits<double>::max());
 }
@@ -248,22 +249,21 @@ void LMPC::updateSystem()
     c_.setZero();
 
     // Update the system
-    if (!ps_->isUpdated)
-        ps_->updateSystem();
+    if (!system_->isUpdated) system_->update();
 
     // Update the constraints
     constraints_.updateNr();
-    Aeq_.resize(constraints_.nrEqConstr, ps_->fullUDim);
+    Aeq_.resize(constraints_.nrEqConstr, system_->fullUDim);
     beq_.resize(constraints_.nrEqConstr);
-    Aineq_.resize(constraints_.nrIneqConstr, ps_->fullUDim);
+    Aineq_.resize(constraints_.nrIneqConstr, system_->fullUDim);
     bineq_.resize(constraints_.nrIneqConstr);
 
     for (auto& cstr : constraints_.spConstr)
-        cstr->update(*ps_);
+        cstr->update(*system_);
 
     // Update the costs
     for (auto& sp : spCost_)
-        sp->update(*ps_);
+        sp->update(*system_);
 }
 
 void LMPC::makeQPForm()
@@ -276,7 +276,7 @@ void LMPC::makeQPForm()
     int nrLines = 0;
     // Get Equality constraints
     for (auto& cstr : constraints_.spEqConstr) {
-        Aeq_.block(nrLines, 0, cstr->nrConstr(), ps_->fullUDim) = cstr->A();
+        Aeq_.block(nrLines, 0, cstr->nrConstr(), system_->fullUDim) = cstr->A();
         beq_.segment(nrLines, cstr->nrConstr()) = cstr->b();
         nrLines += cstr->nrConstr();
     }
@@ -284,7 +284,7 @@ void LMPC::makeQPForm()
     // Get Inequality constraints
     nrLines = 0;
     for (auto& cstr : constraints_.spIneqConstr) {
-        Aineq_.block(nrLines, 0, cstr->nrConstr(), ps_->fullUDim) = cstr->A();
+        Aineq_.block(nrLines, 0, cstr->nrConstr(), system_->fullUDim) = cstr->A();
         bineq_.segment(nrLines, cstr->nrConstr()) = cstr->b();
         nrLines += cstr->nrConstr();
     }

@@ -2,8 +2,9 @@
  * Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
  */
 
-#include "GUROBISolver.h"
 #include <iostream>
+
+#include "copra/solvers/GUROBISolver.h"
 
 namespace copra {
 
@@ -89,4 +90,4 @@ bool GUROBISolver::SI_solve(const Eigen::MatrixXd& Q, const Eigen::VectorXd& c,
     return solver_.solve(Q, c, Aeq, beq, Aineq, bineq, XL, XU);
 }
 
-} // namespace pc
+} // namespace copra

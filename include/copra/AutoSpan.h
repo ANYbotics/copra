@@ -1,13 +1,14 @@
 /*
  * Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+ * Copyright 2020 ANYbotics AG
  */
 
 #pragma once
 
-#include "api.h"
-
-#include "typedefs.h"
 #include <Eigen/Core>
+
+#include "copra/api.h"
+#include "copra/typedefs.h"
 
 namespace copra {
 

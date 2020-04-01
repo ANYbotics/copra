@@ -1,9 +1,10 @@
 /*
  * Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+ * Copyright 2020 ANYbotics AG
  */
 
-#include "costFunctions.h"
-#include "AutoSpan.h"
+#include "copra/costFunctions.h"
+#include "copra/AutoSpan.h"
 
 namespace copra {
 
@@ -21,7 +22,7 @@ void CostFunction::autoSpan()
 {
 }
 
-void CostFunction::initializeCost(const PreviewSystem& ps)
+void CostFunction::initializeCost(const System& ps)
 {
     Q_.resize(ps.fullUDim, ps.fullUDim);
     c_.resize(ps.fullUDim);
@@ -39,7 +40,7 @@ void TrajectoryCost::autoSpan()
     AutoSpan::spanVector(weights_, max_dim);
 }
 
-void TrajectoryCost::initializeCost(const PreviewSystem& ps)
+void TrajectoryCost::initializeCost(const System& ps)
 {
     CostFunction::initializeCost(ps);
     if (M_.rows() != p_.rows())
@@ -55,7 +56,7 @@ void TrajectoryCost::initializeCost(const PreviewSystem& ps)
     }
 }
 
-void TrajectoryCost::update(const PreviewSystem& ps)
+void TrajectoryCost::update(const System& ps)
 {
     if (fullSizeEntry_) {
         Eigen::MatrixXd tmp{ M_ * ps.Psi };
@@ -74,7 +75,7 @@ void TrajectoryCost::update(const PreviewSystem& ps)
  *                                    Target Cost Function                                       *
  *************************************************************************************************/
 
-void TargetCost::initializeCost(const PreviewSystem& ps)
+void TargetCost::initializeCost(const System& ps)
 {
     CostFunction::initializeCost(ps);
     if (M_.rows() != p_.rows())
@@ -84,7 +85,7 @@ void TargetCost::initializeCost(const PreviewSystem& ps)
         DOMAIN_ERROR_EXCEPTION(throwMsgOnRowsOnPSxDim("M", M_, &ps));
 }
 
-void TargetCost::update(const PreviewSystem& ps)
+void TargetCost::update(const System& ps)
 {
     Eigen::MatrixXd tmp{ M_ * ps.Psi.bottomRows(ps.xDim) };
     Q_.noalias() = tmp.transpose() * weights_.asDiagonal() * tmp;
@@ -103,7 +104,7 @@ void ControlCost::autoSpan()
     AutoSpan::spanVector(weights_, max_dim);
 }
 
-void ControlCost::initializeCost(const PreviewSystem& ps)
+void ControlCost::initializeCost(const System& ps)
 {
     CostFunction::initializeCost(ps);
     if (N_.rows() != p_.rows())
@@ -117,7 +118,7 @@ void ControlCost::initializeCost(const PreviewSystem& ps)
         DOMAIN_ERROR_EXCEPTION(throwMsgOnColsOnPSUDim("N", N_, &ps));
 }
 
-void ControlCost::update(const PreviewSystem& ps)
+void ControlCost::update(const System& ps)
 {
     if (fullSizeEntry_) {
         Q_.noalias() = N_.transpose() * weights_.asDiagonal() * N_;
@@ -145,7 +146,7 @@ void MixedCost::autoSpan()
     AutoSpan::spanVector(weights_, max_dim);
 }
 
-void MixedCost::initializeCost(const PreviewSystem& ps)
+void MixedCost::initializeCost(const System& ps)
 {
     CostFunction::initializeCost(ps);
     if (M_.rows() != p_.rows())
@@ -163,7 +164,7 @@ void MixedCost::initializeCost(const PreviewSystem& ps)
     }
 }
 
-void MixedCost::update(const PreviewSystem& ps)
+void MixedCost::update(const System& ps)
 {
     if (fullSizeEntry_) {
         Eigen::MatrixXd tmp = M_ * ps.Psi + N_;

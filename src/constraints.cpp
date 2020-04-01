@@ -1,11 +1,13 @@
 /*
  * Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+ * Copyright 2020 ANYbotics AG
  */
 
-#include "constraints.h"
-#include "AutoSpan.h"
-#include "PreviewSystem.h"
 #include <sstream>
+
+#include "copra/AutoSpan.h"
+#include "copra/constraints.h"
+#include "copra/systems/System.h"
 
 namespace copra {
 
@@ -44,7 +46,7 @@ void TrajectoryConstraint::autoSpan()
     AutoSpan::spanVector(f_, max_dim);
 }
 
-void TrajectoryConstraint::initializeConstraint(const PreviewSystem& ps)
+void TrajectoryConstraint::initializeConstraint(const System& ps)
 {
     if (E_.rows() != f_.rows())
         DOMAIN_ERROR_EXCEPTION(throwMsgOnRowsAskAutoSpan("E", "f", E_, f_));
@@ -63,7 +65,7 @@ void TrajectoryConstraint::initializeConstraint(const PreviewSystem& ps)
     b_.resize(nrConstr_);
 }
 
-void TrajectoryConstraint::update(const PreviewSystem& ps)
+void TrajectoryConstraint::update(const System& ps)
 {
     if (fullSizeEntry_) {
         A_.noalias() = E_ * ps.Psi;
@@ -96,7 +98,7 @@ void ControlConstraint::autoSpan()
     AutoSpan::spanVector(f_, max_dim);
 }
 
-void ControlConstraint::initializeConstraint(const PreviewSystem& ps)
+void ControlConstraint::initializeConstraint(const System& ps)
 {
     if (hasBeenInitialized_)
         RUNTIME_ERROR_EXCEPTION("You have initialized a ControlConstraint twice. As move semantics are used, you can't do so.");
@@ -121,7 +123,7 @@ void ControlConstraint::initializeConstraint(const PreviewSystem& ps)
     hasBeenInitialized_ = true;
 }
 
-void ControlConstraint::update(const PreviewSystem& ps)
+void ControlConstraint::update(const System& ps)
 {
     if (!fullSizeEntry_) {
         auto nrLines = static_cast<int>(G_.rows());
@@ -152,7 +154,7 @@ void MixedConstraint::autoSpan()
     AutoSpan::spanVector(f_, max_dim);
 }
 
-void MixedConstraint::initializeConstraint(const PreviewSystem& ps)
+void MixedConstraint::initializeConstraint(const System& ps)
 {
     if (E_.rows() != f_.rows())
         DOMAIN_ERROR_EXCEPTION(throwMsgOnRowsAskAutoSpan("E", "f", E_, f_));
@@ -173,7 +175,7 @@ void MixedConstraint::initializeConstraint(const PreviewSystem& ps)
     A_.setZero();
 }
 
-void MixedConstraint::update(const PreviewSystem& ps)
+void MixedConstraint::update(const System& ps)
 {
     if (fullSizeEntry_) {
         A_.noalias() = E_ * ps.Psi + G_;
@@ -227,7 +229,7 @@ void TrajectoryBoundConstraint::autoSpan()
     }
 }
 
-void TrajectoryBoundConstraint::initializeConstraint(const PreviewSystem& ps)
+void TrajectoryBoundConstraint::initializeConstraint(const System& ps)
 {
     if (lower_.rows() != upper_.rows())
         DOMAIN_ERROR_EXCEPTION(throwMsgOnRowsAskAutoSpan("lower", "upper", lower_, upper_));
@@ -245,7 +247,7 @@ void TrajectoryBoundConstraint::initializeConstraint(const PreviewSystem& ps)
     b_.resize(nrConstr_);
 }
 
-void TrajectoryBoundConstraint::update(const PreviewSystem& ps)
+void TrajectoryBoundConstraint::update(const System& ps)
 {
     int nrLines = 0;
     Eigen::VectorXd delta = ps.Phi * ps.x0 + ps.xi;
@@ -286,7 +288,7 @@ void ControlBoundConstraint::autoSpan()
     AutoSpan::spanVector(upper_, max_dim);
 }
 
-void ControlBoundConstraint::initializeConstraint(const PreviewSystem& ps)
+void ControlBoundConstraint::initializeConstraint(const System& ps)
 {
     if (hasBeenInitialized_)
         RUNTIME_ERROR_EXCEPTION("You have initialized a ControlBoundConstraint twice. As move semantics are used, you can't do so.");
@@ -310,7 +312,7 @@ void ControlBoundConstraint::initializeConstraint(const PreviewSystem& ps)
     hasBeenInitialized_ = true;
 }
 
-void ControlBoundConstraint::update(const PreviewSystem& ps)
+void ControlBoundConstraint::update(const System& ps)
 {
     if (!fullSizeEntry_) {
         for (int i = 0; i < ps.nrUStep; ++i) {

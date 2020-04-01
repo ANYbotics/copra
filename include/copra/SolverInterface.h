@@ -1,12 +1,13 @@
 /*
  * Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+ * Copyright 2020 ANYbotics AG
  */
 
 #pragma once
 
-#include "api.h"
-
 #include <Eigen/Core>
+
+#include "copra/api.h"
 
 namespace copra {
 
@@ -126,4 +127,4 @@ public:
         = 0;
 };
 
-} // namespace pc
+} // namespace copra

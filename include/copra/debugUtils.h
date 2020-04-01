@@ -1,15 +1,17 @@
 /*
  * Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+ * Copyright 2020 ANYbotics AG
  */
 
 #pragma once
 
-#include "api.h"
-
-#include "PreviewSystem.h"
-#include "typedefs.h"
-#include <Eigen/Core>
 #include <iostream>
+
+#include <Eigen/Core>
+
+#include "copra/api.h"
+#include "copra/systems/System.h"
+#include "copra/typedefs.h"
 
 #ifdef NDEBUG
 #define CONSTRAINT_DELETION_WARN(warn, format, ...) (void)warn
@@ -76,7 +78,7 @@ COPRA_DLLAPI std::string throwMsgOnRowsOnDim(const char* matName, const Eigen::M
  * \param ps The preview system
  * \return The throwing message
  */
-COPRA_DLLAPI std::string throwMsgOnRowsOnPSxDim(const char* matName, const Eigen::MatrixXd& mat, const PreviewSystem* ps);
+COPRA_DLLAPI std::string throwMsgOnRowsOnPSxDim(const char* matName, const Eigen::MatrixXd& mat, const System* ps);
 /**
  * \brief Message error where a matrix has its number of rows equal to preview system xDim or fullXDim
  * \param matName Name of the checked matrix
@@ -84,7 +86,7 @@ COPRA_DLLAPI std::string throwMsgOnRowsOnPSxDim(const char* matName, const Eigen
  * \param ps The preview system
  * \return The throwing message
  */
-COPRA_DLLAPI std::string throwMsgOnRowsOnPSXDim(const char* matName, const Eigen::MatrixXd& mat, const PreviewSystem* ps);
+COPRA_DLLAPI std::string throwMsgOnRowsOnPSXDim(const char* matName, const Eigen::MatrixXd& mat, const System* ps);
 /**
  * \brief Message error where a matrix has its number of rows equal to preview system uDim or fullUDim
  * \param matName Name of the checked matrix
@@ -92,7 +94,7 @@ COPRA_DLLAPI std::string throwMsgOnRowsOnPSXDim(const char* matName, const Eigen
  * \param ps The preview system
  * \return The throwing message
  */
-COPRA_DLLAPI std::string throwMsgOnRowsOnPSUDim(const char* matName, const Eigen::MatrixXd& mat, const PreviewSystem* ps);
+COPRA_DLLAPI std::string throwMsgOnRowsOnPSUDim(const char* matName, const Eigen::MatrixXd& mat, const System* ps);
 /**
  * \brief Message error where a matrix has its number of columns equal to preview system xDim or fullXDim
  * \param matName Name of the checked matrix
@@ -100,7 +102,7 @@ COPRA_DLLAPI std::string throwMsgOnRowsOnPSUDim(const char* matName, const Eigen
  * \param ps The preview system
  * \return The throwing message
  */
-COPRA_DLLAPI std::string throwMsgOnColsOnPSXDim(const char* matName, const Eigen::MatrixXd& mat, const PreviewSystem* ps);
+COPRA_DLLAPI std::string throwMsgOnColsOnPSXDim(const char* matName, const Eigen::MatrixXd& mat, const System* ps);
 /**
  * \brief Message error where a matrix has its number of columns equal to preview system uDim or fullUDim
  * \param matName Name of the checked matrix
@@ -108,7 +110,7 @@ COPRA_DLLAPI std::string throwMsgOnColsOnPSXDim(const char* matName, const Eigen
  * \param ps The preview system
  * \return The throwing message
  */
-COPRA_DLLAPI std::string throwMsgOnColsOnPSUDim(const char* matName, const Eigen::MatrixXd& mat, const PreviewSystem* ps);
+COPRA_DLLAPI std::string throwMsgOnColsOnPSUDim(const char* matName, const Eigen::MatrixXd& mat, const System* ps);
 /**
  * \brief Message error where two matrices number of columns are equal to the preview system datas.
  * Message error where the first matrix and the second matrix are respectively equal to the preview system xDim and uDim.
@@ -119,7 +121,7 @@ COPRA_DLLAPI std::string throwMsgOnColsOnPSUDim(const char* matName, const Eigen
  * \param ps The preview system
  * \return The throwing message
  */
-COPRA_DLLAPI std::string throwMsgOnColsOnPSxuDim(const char* mat1Name, const char* mat2Name, const Eigen::MatrixXd& mat1, const Eigen::MatrixXd& mat2, const PreviewSystem* ps);
+COPRA_DLLAPI std::string throwMsgOnColsOnPSxuDim(const char* mat1Name, const char* mat2Name, const Eigen::MatrixXd& mat1, const Eigen::MatrixXd& mat2, const System* ps);
 /**
  * \brief Message error where two matrices number of columns are equal to the preview system datas.
  * Message error where the first matrix and the second matrix are either respectively equal to the preview system xDim and uDim
@@ -131,7 +133,7 @@ COPRA_DLLAPI std::string throwMsgOnColsOnPSxuDim(const char* mat1Name, const cha
  * \param ps The preview system
  * \return The throwing message
  */
-COPRA_DLLAPI std::string throwMsgOnColsOnPSXUDim(const char* mat1Name, const char* mat2Name, const Eigen::MatrixXd& mat1, const Eigen::MatrixXd& mat2, const PreviewSystem* ps);
+COPRA_DLLAPI std::string throwMsgOnColsOnPSXUDim(const char* mat1Name, const char* mat2Name, const Eigen::MatrixXd& mat1, const Eigen::MatrixXd& mat2, const System* ps);
 
 /**
  * \brief Message error where a matrix can not be extended to fit the new dimension.

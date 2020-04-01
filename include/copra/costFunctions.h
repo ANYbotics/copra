@@ -43,13 +43,13 @@ public:
      * \param ps The preview system.
      * \throw Throw an std::domain_error if M, N or p is of bad dimension.
      */
-    virtual void initializeCost(const PreviewSystem& ps);
+    virtual void initializeCost(const System& ps);
 
     /**
-     * Compute \f$Q\f$ and \f$c\f$.
+     * \brief Compute \f$Q\f$ and \f$c\f$.
      * \param ps The preview system.
      */
-    virtual void update(const PreviewSystem& ps) = 0;
+    virtual void update(const System& ps) = 0;
 
     /**
      * Set the weights of the system.
@@ -133,8 +133,8 @@ public:
     }
 
     void autoSpan() override;
-    void initializeCost(const PreviewSystem& ps) override;
-    void update(const PreviewSystem& ps) override;
+    void initializeCost(const System& ps) override;
+    void update(const System& ps) override;
 
 private:
     Eigen::MatrixXd M_;
@@ -164,8 +164,8 @@ public:
         weights_ = Eigen::VectorXd::Ones(p_.rows());
     }
 
-    void initializeCost(const PreviewSystem& ps) override;
-    void update(const PreviewSystem& ps) override;
+    void initializeCost(const System& ps) override;
+    void update(const System& ps) override;
 
 private:
     Eigen::MatrixXd M_;
@@ -196,8 +196,8 @@ public:
     }
 
     void autoSpan() override;
-    void update(const PreviewSystem& ps) override;
-    void initializeCost(const PreviewSystem& ps) override;
+    void update(const System& ps) override;
+    void initializeCost(const System& ps) override;
 
 private:
     Eigen::MatrixXd N_;
@@ -230,8 +230,8 @@ public:
     }
 
     void autoSpan() override;
-    void update(const PreviewSystem& ps) override;
-    void initializeCost(const PreviewSystem& ps) override;
+    void update(const System& ps) override;
+    void initializeCost(const System& ps) override;
 
 private:
     Eigen::MatrixXd M_, N_;

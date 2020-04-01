@@ -1,9 +1,10 @@
 #
 # Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+# Copyright 2020 ANYbotics AG
 #
 
 macro(addTest testName)
-    add_executable(${testName} ${testName}.cpp systems.h tools.h tools.cpp doctest.h)
+    add_executable(${testName} ${testName}.cpp time_invariant_systems.h tools.h tools.cpp doctest.h)
     target_link_libraries(${testName} PUBLIC ${PROJECT_NAME})
     target_compile_definitions(${testName} PRIVATE DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN)
     add_test(${testName}Unit ${testName})

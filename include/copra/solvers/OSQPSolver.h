@@ -1,26 +1,29 @@
 /*
  * Copyright 2016-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+ * Copyright 2020 ANYbotics AG
  */
 
 #pragma once
 
-#include "api.h"
-
-#include "SolverInterface.h"
 #include <Eigen/Core>
-#include <eigen-lssol/LSSOL_QP.h>
+#include <eigen-osqp/OSQP.h>
+
+#include "copra/api.h"
+#include "copra/SolverInterface.h"
 
 namespace copra {
 
 /**
- * LSSOLSolver solver for both dense matrix.
+ * OSQP solver for dense matrix.
  */
-class COPRA_DLLAPI LSSOLSolver : public SolverInterface {
+
+// TODO: Enable sparse matrix
+class COPRA_DLLAPI OSQPSolver : public SolverInterface {
 public:
     /**
-     * LSSOLSolver default constructor
-     */
-    LSSOLSolver() = default;
+       * QLDSolver default constructor
+       */
+    OSQPSolver();
 
     /**
      * Get information of eventual fail's solver output as define by the
@@ -36,46 +39,29 @@ public:
      * denotes a constraint causing the conflict.
      */
     int SI_fail() const override;
-    /**
-     * Select the print level of the solver if available
-     * \param pl The print level.
-     * \param pl =0  : Nothing is printed
-     * \param pl =1  : The final solution is printed
-     * \param pl =5  : One line of output for each iteration
-     * \param pl =10 : One line of output for each iteration and the final solution is printed
-     * \param pl >20 : At each iteration, the Lagrangian multipliers, the variables x,
-     * the constraints values Cx and the constraints status.
-     * \param pl >30 : For an understanding of this, see the official documentation.
-     */
-    void SI_printLevel(int pl) override;
 
     void SI_inform() const override;
     int SI_iter() const override;
-
     int SI_maxIter() const override;
     void SI_maxIter(int maxIter) override;
-
-    double SI_feasibilityTolerance() const override;
+    void SI_printLevel(int pl) override;
     void SI_feasibilityTolerance(double tol) override;
-
     bool SI_warmStart() const override;
     void SI_warmStart(bool w) override;
 
     const Eigen::VectorXd& SI_result() const override;
     void SI_problem(int nrVar, int nrEq, int nrInEq) override;
+
+
     bool SI_solve(const Eigen::MatrixXd& Q, const Eigen::VectorXd& c,
         const Eigen::MatrixXd& Aeq, const Eigen::VectorXd& beq,
         const Eigen::MatrixXd& Aineq, const Eigen::VectorXd& bineq,
         const Eigen::VectorXd& XL, const Eigen::VectorXd& XU) override;
 
-    Eigen::LSSOL_QP& baseSolver() noexcept { return solver_; }
+    Eigen::OSQP& baseSolver() noexcept { return solver_; }
 
 private:
-    Eigen::LSSOL_QP solver_;
-    Eigen::MatrixXd Q_;
-    Eigen::MatrixXd A_;
-    Eigen::VectorXd bl_;
-    Eigen::VectorXd bu_;
+    Eigen::OSQP solver_;
 };
 
-} // namespace pc
+} // namespace copra
