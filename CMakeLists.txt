@@ -32,9 +32,13 @@ set(CMAKE_CXX_STANDARD 14)
 add_compile_options(-Wall -Wextra -Wpedantic)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(CATKIN_PACKAGE_HEADER_DEPENDENCIES
+  eigen-quadprog
+)
+
 find_package(catkin REQUIRED COMPONENTS
   eigen-qld
-  eigen-quadprog
+  ${CATKIN_PACKAGE_HEADER_DEPENDENCIES}
 )
 
 find_package(Eigen3 REQUIRED)
