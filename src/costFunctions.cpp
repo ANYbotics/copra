@@ -72,6 +72,24 @@ void TrajectoryCost::update(const System& ps)
 }
 
 /*************************************************************************************************
+ *                           Simple Trajectory Cost Function                                     *
+ *************************************************************************************************/
+
+void SimpleTrajectoryCost::update(const System& ps)
+{
+  if (fullSizeEntry_) {
+    Q_.noalias() = ps.Psi.transpose() * weights_.asDiagonal() * ps.Psi;
+    c_.noalias() = ((ps.Phi * ps.x0 + ps.xi) - p_).cwiseProduct(weights_).transpose() * ps.Psi;
+  } else {
+    for (int i = 0; i < ps.nrXStep; ++i) { // Can be optimized. Lot of sums of zero here
+      Eigen::MatrixXd tmp{ps.Psi.block(i * ps.xDim, 0, ps.xDim, ps.fullUDim)};
+      Q_.noalias() += tmp.transpose() * weights_.asDiagonal() * tmp;
+      c_.noalias() += ((ps.Phi.block(i * ps.xDim, 0, ps.xDim, ps.xDim) * ps.x0 + ps.xi.segment(i * ps.xDim, ps.xDim)) - p_).transpose() * weights_.asDiagonal() * tmp;
+    }
+  }
+}
+
+/*************************************************************************************************
  *                                    Target Cost Function                                       *
  *************************************************************************************************/
 
@@ -131,6 +149,25 @@ void ControlCost::update(const System& ps)
             c_.segment(i * ps.uDim, ps.uDim) = vec;
         }
     }
+}
+
+/*************************************************************************************************
+ *                            Simple Control Cost Function                                       *
+ *************************************************************************************************/
+
+void SimpleControlCost::update(const System& ps)
+{
+  if (fullSizeEntry_) {
+    Q_.noalias() = weights_.asDiagonal().toDenseMatrix();
+    c_.noalias() = -p_.cwiseProduct(weights_);
+  } else {
+    Eigen::MatrixXd mat{weights_.asDiagonal().toDenseMatrix()};
+    Eigen::VectorXd vec{-p_.cwiseProduct(weights_)};
+    for (int i = 0; i < ps.nrUStep; ++i) {
+      Q_.block(i * ps.uDim, i * ps.uDim, ps.uDim, ps.uDim) = mat;
+      c_.segment(i * ps.uDim, ps.uDim) = vec;
+    }
+  }
 }
 
 /*************************************************************************************************

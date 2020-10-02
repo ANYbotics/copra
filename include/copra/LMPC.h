@@ -131,6 +131,11 @@ public:
     void resetConstraints() noexcept;
 
     /**
+     * Clear the costs
+     */
+    void resetCosts() noexcept;
+
+    /**
      * Remove cost
      */
     void removeCost(const std::shared_ptr<CostFunction>& costFun);

@@ -18,10 +18,8 @@ std::unique_ptr<SolverInterface> solverFactory(SolverFlag flag)
     case SolverFlag::GUROBIDense:
         return std::unique_ptr<GUROBISolver>(new GUROBISolver());
 #endif
-#ifdef EIGEN_QLD_FOUND
     case SolverFlag::QLD:
         return std::unique_ptr<QLDSolver>(new QLDSolver());
-#endif
 #ifdef EIGEN_OSQP_FOUND
     case SolverFlag::OSQP:
         return std::unique_ptr<OSQPSolver>(new OSQPSolver());
@@ -29,8 +27,10 @@ std::unique_ptr<SolverInterface> solverFactory(SolverFlag flag)
     // case SolverFlag::QuadProgSparse:
     //    return std::make_unique<QuadProgSparseSolver>();
     case SolverFlag::QuadProgDense:
+    case SolverFlag::DEFAULT:
+      return std::unique_ptr<QuadProgDenseSolver>(new QuadProgDenseSolver());
     default:
-        return std::unique_ptr<QuadProgDenseSolver>(new QuadProgDenseSolver());
+      throw std::runtime_error("Invalid solver flag");
     }
 }
 

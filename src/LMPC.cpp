@@ -167,7 +167,10 @@ void LMPC::addConstraint(const std::shared_ptr<Constraint>& constr)
 void LMPC::resetConstraints() noexcept
 {
     constraints_.clear();
-    clearConstraintMatrices();
+}
+
+void LMPC::resetCosts() noexcept {
+  spCost_.clear();
 }
 
 void LMPC::removeCost(const std::shared_ptr<CostFunction>& costFun)

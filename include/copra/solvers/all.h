@@ -6,9 +6,7 @@
 #pragma once
 
 #include "QuadProgSolver.h"
-#ifdef EIGEN_QLD_FOUND
 #include "QLDSolver.h"
-#endif
 #ifdef EIGEN_LSSOL_FOUND
 #include "LSSOLSolver.h"
 #endif

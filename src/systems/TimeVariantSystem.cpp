@@ -47,8 +47,8 @@ void TimeVariantSystem::update() noexcept
      * => xi_{k+1} = A_k * xi_k + d_k
      */
     Phi.block((k + 1) * xDim, 0, xDim, xDim).noalias() = A_k * Phi.block(k * xDim, 0, xDim, xDim);
-    Psi.block((k + 1) * xDim, k * uDim, xDim, uDim).noalias() = B_k;
-    Psi.block((k + 1) * xDim, 0, xDim, fullUDim) += A_k * Psi.block(k * xDim, 0, xDim, fullUDim);
+    Psi.block((k + 1) * xDim, 0, xDim, fullUDim).noalias() = A_k * Psi.block(k * xDim, 0, xDim, fullUDim);
+    Psi.block((k + 1) * xDim, k * uDim, xDim, uDim) += B_k;
     xi.segment((k + 1) * xDim, xDim).noalias() = A_k * xi.segment(k * xDim, xDim) + d_k;
   }
 

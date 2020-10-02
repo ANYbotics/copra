@@ -8,9 +8,7 @@
 #include "copra/api.h"
 
 #include "QuadProgSolver.h"
-#ifdef EIGEN_QLD_FOUND
 #include "QLDSolver.h"
-#endif
 #ifdef EIGEN_LSSOL_FOUND
 #include "LSSOLSolver.h"
 #endif
@@ -42,9 +40,7 @@ enum class COPRA_DLLAPI SolverFlag {
 #ifdef EIGEN_GUROBI_FOUND
     GUROBIDense, /**< Gurobi quadratic dense solver */
 #endif
-#ifdef EIGEN_QLD_FOUND
     QLD, /**< Scilab QLD solver */
-#endif
 #ifdef EIGEN_OSQP_FOUND
     OSQP,
 #endif

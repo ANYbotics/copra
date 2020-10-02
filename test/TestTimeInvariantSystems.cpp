@@ -201,6 +201,116 @@ TEST_F(BoundedSystem, mpcMixedCostWithBoundConstraints) {  // NOLINT
 }
 
 /********************************************************************************************************
+ *                                      Check Simple cost                                               *
+ ********************************************************************************************************/
+
+TEST_F(BoundedSystem, mpcSimpleTrajectoryCostEquivalenceTest) {  // NOLINT
+  Eigen::VectorXd trajectory1 ;
+  Eigen::VectorXd trajectory2;
+  Eigen::VectorXd control1;
+  Eigen::VectorXd control2;
+
+  {
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
+    N.setIdentity();
+    auto controller = copra::LMPC(ps);
+    auto xCost = std::make_shared<copra::TrajectoryCost>(M, xd);
+    auto uCost = std::make_shared<copra::ControlCost>(N, ud);
+    auto trajConstr = std::make_shared<copra::TrajectoryBoundConstraint>(xLower, xUpper);
+    auto contConstr = std::make_shared<copra::ControlBoundConstraint>(uLower, uUpper);
+    xCost->weights(wx);
+    uCost->weights(wu);
+
+    controller.addCost(xCost);
+    controller.addCost(uCost);
+    controller.addConstraint(trajConstr);
+    controller.addConstraint(contConstr);
+    ASSERT_TRUE(controller.solve());
+    trajectory1 = controller.trajectory();
+    control1 = controller.trajectory();
+  }
+
+  {
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
+    N.setIdentity();
+    auto controller = copra::LMPC(ps);
+    auto xCost = std::make_shared<copra::TrajectoryCost>(M, xd);
+    auto uCost = std::make_shared<copra::SimpleControlCost>(N, ud);
+    auto trajConstr = std::make_shared<copra::TrajectoryBoundConstraint>(xLower, xUpper);
+    auto contConstr = std::make_shared<copra::ControlBoundConstraint>(uLower, uUpper);
+    xCost->weights(wx);
+    uCost->weights(wu);
+
+    controller.addCost(xCost);
+    controller.addCost(uCost);
+    controller.addConstraint(trajConstr);
+    controller.addConstraint(contConstr);
+    ASSERT_TRUE(controller.solve());
+    trajectory2 = controller.trajectory();
+    control2 = controller.trajectory();
+  }
+
+  ASSERT_TRUE(trajectory1.isApprox(trajectory2));
+  ASSERT_TRUE(control1.isApprox(control2));
+
+}
+
+TEST_F(BoundedSystem, mpcSimpleControlCostEquivalenceTest) {  // NOLINT
+  Eigen::VectorXd trajectory1 ;
+  Eigen::VectorXd trajectory2;
+  Eigen::VectorXd control1;
+  Eigen::VectorXd control2;
+
+  {
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
+    N.setIdentity();
+    auto controller = copra::LMPC(ps);
+    auto xCost = std::make_shared<copra::TrajectoryCost>(M, xd);
+    auto uCost = std::make_shared<copra::ControlCost>(N, ud);
+    auto trajConstr = std::make_shared<copra::TrajectoryBoundConstraint>(xLower, xUpper);
+    auto contConstr = std::make_shared<copra::ControlBoundConstraint>(uLower, uUpper);
+    xCost->weights(wx);
+    uCost->weights(wu);
+
+    controller.addCost(xCost);
+    controller.addCost(uCost);
+    controller.addConstraint(trajConstr);
+    controller.addConstraint(contConstr);
+    ASSERT_TRUE(controller.solve());
+    trajectory1 = controller.trajectory();
+    control1 = controller.trajectory();
+  }
+
+  {
+    auto ps = std::make_shared<copra::TimeInvariantSystem>();
+    ps->reset(A, B, c, x0, nbStep);
+    N.setIdentity();
+    auto controller = copra::LMPC(ps);
+    auto xCost = std::make_shared<copra::SimpleTrajectoryCost>(M, xd);
+    auto uCost = std::make_shared<copra::ControlCost>(N, ud);
+    auto trajConstr = std::make_shared<copra::TrajectoryBoundConstraint>(xLower, xUpper);
+    auto contConstr = std::make_shared<copra::ControlBoundConstraint>(uLower, uUpper);
+    xCost->weights(wx);
+    uCost->weights(wu);
+
+    controller.addCost(xCost);
+    controller.addCost(uCost);
+    controller.addConstraint(trajConstr);
+    controller.addConstraint(contConstr);
+    ASSERT_TRUE(controller.solve());
+    trajectory2 = controller.trajectory();
+    control2 = controller.trajectory();
+  }
+
+  ASSERT_TRUE(trajectory1.isApprox(trajectory2));
+  ASSERT_TRUE(control1.isApprox(control2));
+
+}
+
+/********************************************************************************************************
  *                            Check inequality constraint                                               *
  ********************************************************************************************************/
 

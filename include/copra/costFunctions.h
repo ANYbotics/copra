@@ -112,9 +112,9 @@ protected:
 /**
  * \brief Trajectory cost function class.
  * This cost function looks for a minimization around a trajectory.
- * Mathematically, it is \f$(MX-p)^TW_X(MX-p) \Leftrightarrow \sum_k w_k\|Mx_k-p\|^2\f$.
+ * Mathematically, it is \f$(MX-p)^TW_X(MX-p) \Leftrightarrow \sum_k w_k\|Mx_k-p_k\|^2\f$.
  */
-class COPRA_DLLAPI TrajectoryCost final : public CostFunction {
+class COPRA_DLLAPI TrajectoryCost : public CostFunction {
 public:
     /**
      * \brief Constructor of the trajectory cost function.
@@ -136,9 +136,22 @@ public:
     void initializeCost(const System& ps) override;
     void update(const System& ps) override;
 
-private:
+ protected:
     Eigen::MatrixXd M_;
     Eigen::VectorXd p_;
+};
+
+/**
+ * \brief Simple Trajectory cost function class.
+ * This cost function looks for a minimization around a trajectory.
+ * Mathematically, it is \f$(X-p)^TW_X(X-p) \Leftrightarrow \sum_k w_k\|x_k-p_k\|^2\f$.
+ * @note The difference between TrajectoryCost and SimpleTrajectoryCost is that the latter has \f$M\f$ equal to the identity.
+ */
+class COPRA_DLLAPI SimpleTrajectoryCost final : public TrajectoryCost {
+ public:
+  using TrajectoryCost::TrajectoryCost;
+
+  void update(const System& ps) override;
 };
 
 /**
@@ -175,9 +188,9 @@ private:
 /**
  * \brief Control cost function class.
  * This cost function looks for a minimization of the control.
- * Mathematically, it is \f$(NU-p)^TW_U(NU-p) \Leftrightarrow sum_k w_u\|Nu_k-p\|^2\f$.
+ * Mathematically, it is \f$(NU-p)^TW_U(NU-p) \Leftrightarrow sum_k w_u\|Nu_k-p_k\|^2\f$.
  */
-class COPRA_DLLAPI ControlCost final : public CostFunction {
+class COPRA_DLLAPI ControlCost : public CostFunction {
 public:
     /**
      * \brief Constructor of the control cost function.
@@ -199,9 +212,22 @@ public:
     void update(const System& ps) override;
     void initializeCost(const System& ps) override;
 
-private:
+   protected:
     Eigen::MatrixXd N_;
     Eigen::VectorXd p_;
+};
+
+/**
+ * \brief Simple control cost function class.
+ * This cost function seeks controls that match some reference values.
+ * Mathematically, it is \f$(U-p)^T W_U (U-p) \Leftrightarrow \sum_k w_u \|u_k-p_k\|^2\f$.
+ * @note The difference between ControlCost and SimpleControlCost is that the latter has \f$N\f$ equal to the identity.
+ */
+class COPRA_DLLAPI SimpleControlCost final : public ControlCost {
+ public:
+  using ControlCost::ControlCost;
+
+  void update(const System& ps) override;
 };
 
 /**
