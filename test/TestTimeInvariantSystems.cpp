@@ -234,10 +234,9 @@ TEST_F(BoundedSystem, mpcSimpleTrajectoryCostEquivalenceTest) {  // NOLINT
   {
     auto ps = std::make_shared<copra::TimeInvariantSystem>();
     ps->reset(A, B, c, x0, nbStep);
-    N.setIdentity();
     auto controller = copra::LMPC(ps);
     auto xCost = std::make_shared<copra::TrajectoryCost>(M, xd);
-    auto uCost = std::make_shared<copra::SimpleControlCost>(N, ud);
+    auto uCost = std::make_shared<copra::SimpleControlCost>(ud);
     auto trajConstr = std::make_shared<copra::TrajectoryBoundConstraint>(xLower, xUpper);
     auto contConstr = std::make_shared<copra::ControlBoundConstraint>(uLower, uUpper);
     xCost->weights(wx);
@@ -266,7 +265,7 @@ TEST_F(BoundedSystem, mpcSimpleControlCostEquivalenceTest) {  // NOLINT
   {
     auto ps = std::make_shared<copra::TimeInvariantSystem>();
     ps->reset(A, B, c, x0, nbStep);
-    N.setIdentity();
+    M.setIdentity();
     auto controller = copra::LMPC(ps);
     auto xCost = std::make_shared<copra::TrajectoryCost>(M, xd);
     auto uCost = std::make_shared<copra::ControlCost>(N, ud);
@@ -287,9 +286,8 @@ TEST_F(BoundedSystem, mpcSimpleControlCostEquivalenceTest) {  // NOLINT
   {
     auto ps = std::make_shared<copra::TimeInvariantSystem>();
     ps->reset(A, B, c, x0, nbStep);
-    N.setIdentity();
     auto controller = copra::LMPC(ps);
-    auto xCost = std::make_shared<copra::SimpleTrajectoryCost>(M, xd);
+    auto xCost = std::make_shared<copra::SimpleTrajectoryCost>(xd);
     auto uCost = std::make_shared<copra::ControlCost>(N, ud);
     auto trajConstr = std::make_shared<copra::TrajectoryBoundConstraint>(xLower, xUpper);
     auto contConstr = std::make_shared<copra::ControlBoundConstraint>(uLower, uUpper);

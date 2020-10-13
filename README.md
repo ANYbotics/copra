@@ -56,7 +56,7 @@ This package was forked from [jrl-umi3218](https://github.com/jrl-umi3218/copra)
 - Extended to time-variant systems
 - Catkin packaging for ROS
 - Unit tests converted from doctest to Google Test
-- Introduce simple trajectory and control tracking cost functions
+- Introduce SimpleTrajectoryCost and SimpleControlCost
 - Introduce a method to reset all costs
 
 The library was originally developed by [Vincent Samy](https://github.com/vsamy). It is licensed under the [BSD-2-Clause](https://opensource.org/licenses/BSD-2-Clause). Its default quadratic programming solver (eigen-quadprog) is licensed under the LGPLv2.

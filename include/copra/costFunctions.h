@@ -136,7 +136,7 @@ public:
     void initializeCost(const System& ps) override;
     void update(const System& ps) override;
 
- protected:
+private:
     Eigen::MatrixXd M_;
     Eigen::VectorXd p_;
 };
@@ -147,11 +147,29 @@ public:
  * Mathematically, it is \f$(X-p)^TW_X(X-p) \Leftrightarrow \sum_k w_k\|x_k-p_k\|^2\f$.
  * @note The difference between TrajectoryCost and SimpleTrajectoryCost is that the latter has \f$M\f$ equal to the identity.
  */
-class COPRA_DLLAPI SimpleTrajectoryCost final : public TrajectoryCost {
- public:
-  using TrajectoryCost::TrajectoryCost;
+class COPRA_DLLAPI SimpleTrajectoryCost final : public CostFunction {
+public:
+    /**
+       * \brief Constructor of the simple trajectory cost function.
+       * Create a cost function of type \f$(MX-p)^TW_X(MX-p)\f$.
+       * Perform a move semantic if an rvalue is given.
+       * \param M The matrix side of the cost function
+       * \param p The vector side of the cost function
+       */
+    template <typename TVec, typename = std::enable_if_t<!is_all_arithmetic<TVec>::value>>
+    explicit SimpleTrajectoryCost(TVec&& p)
+        : CostFunction("SimpleTrajectoryCost")
+        , p_(std::forward<TVec>(p))
+    {
+        weights_ = Eigen::VectorXd::Ones(p_.rows());
+    }
 
-  void update(const System& ps) override;
+    void autoSpan() override;
+    void initializeCost(const System& ps) override;
+    void update(const System& ps) override;
+
+private:
+      Eigen::VectorXd p_;
 };
 
 /**
@@ -212,7 +230,7 @@ public:
     void update(const System& ps) override;
     void initializeCost(const System& ps) override;
 
-   protected:
+private:
     Eigen::MatrixXd N_;
     Eigen::VectorXd p_;
 };
@@ -223,11 +241,29 @@ public:
  * Mathematically, it is \f$(U-p)^T W_U (U-p) \Leftrightarrow \sum_k w_u \|u_k-p_k\|^2\f$.
  * @note The difference between ControlCost and SimpleControlCost is that the latter has \f$N\f$ equal to the identity.
  */
-class COPRA_DLLAPI SimpleControlCost final : public ControlCost {
- public:
-  using ControlCost::ControlCost;
+class COPRA_DLLAPI SimpleControlCost final : public CostFunction {
+public:
+    /**
+       * \brief Constructor of the simple control cost function.
+       * Create a cost function of type \f$(NU-p)^TW_U(NU-p)\f$.
+       * Perform a move semantic if an rvalue is given.
+       * \param N The matrix side of the cost function
+       * \param p The vector side of the cost function
+       */
+    template <typename TVec, typename = std::enable_if_t<!is_all_arithmetic<TVec>::value>>
+    SimpleControlCost(TVec&& p)
+        : CostFunction("SimpleControlCost")
+        , p_(std::forward<TVec>(p))
+    {
+        weights_ = Eigen::VectorXd::Ones(p_.rows());
+    }
 
-  void update(const System& ps) override;
+    void autoSpan() override;
+    void update(const System& ps) override;
+    void initializeCost(const System& ps) override;
+
+private:
+    Eigen::VectorXd p_;
 };
 
 /**
