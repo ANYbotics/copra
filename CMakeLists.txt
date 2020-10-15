@@ -34,10 +34,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CATKIN_PACKAGE_HEADER_DEPENDENCIES
   eigen-quadprog
+  eigen-qld
 )
 
 find_package(catkin REQUIRED COMPONENTS
-  eigen-qld
   ${CATKIN_PACKAGE_HEADER_DEPENDENCIES}
 )
 
