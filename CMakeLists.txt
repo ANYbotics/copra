@@ -35,6 +35,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CATKIN_PACKAGE_HEADER_DEPENDENCIES
   eigen-quadprog
   eigen-qld
+  qp_oases
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -72,6 +73,7 @@ add_library(${PROJECT_NAME}
   src/costFunctions.cpp
   src/debugUtils.cpp
   src/solvers/QLDSolver.cpp
+  src/solvers/qpOASESSolver.cpp
   src/solvers/QuadProgSolver.cpp
   src/solvers/utils.cpp
   src/systems/System.cpp

@@ -7,6 +7,7 @@
 
 #include "QuadProgSolver.h"
 #include "QLDSolver.h"
+#include "qpOASESSolver.h"
 #ifdef EIGEN_LSSOL_FOUND
 #include "LSSOLSolver.h"
 #endif

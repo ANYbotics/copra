@@ -9,6 +9,7 @@
 
 #include "QuadProgSolver.h"
 #include "QLDSolver.h"
+#include "qpOASESSolver.h"
 #ifdef EIGEN_LSSOL_FOUND
 #include "LSSOLSolver.h"
 #endif
@@ -46,6 +47,7 @@ enum class COPRA_DLLAPI SolverFlag {
 #endif
     QuadProgDense, /**< DenseMatrix version of QuadProg solver */
     // QuadProgSparse
+    qpOASES,
 };
 
 #ifdef __GNUC__

@@ -14,9 +14,11 @@
   <build_depend>eigen-qld</build_depend>
   <build_depend>eigen-quadprog</build_depend>
   <build_depend>eigen</build_depend>
+  <build_depend>qp_oases</build_depend>
   <build_export_depend>eigen-quadprog</build_export_depend>
   <build_export_depend>eigen-qld</build_export_depend>
   <build_export_depend>eigen</build_export_depend>
+  <build_export_depend>qp_oases</build_export_depend>
   <test_depend>gtest</test_depend>
 <!--   <test_depend>cmake_code_coverage</test_depend> -->
 </package>

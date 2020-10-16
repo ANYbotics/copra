@@ -23,6 +23,15 @@ TEST_F(Problem, QuadProgTest) {  // NOLINT
     ASSERT_EQ(qpQuadProg.SI_fail(), 0);
 }
 
+TEST_F(Problem, qpOASESTest) {  // NOLINT
+  copra::qpOASESSolver qpOasesSolver;
+
+  qpOasesSolver.SI_problem(nrvars, nreqs, nrineqs);
+  ASSERT_TRUE(qpOasesSolver.SI_solve(Q, c, Aeq, beq, Aineq, bineq, XL, XU));
+
+  ASSERT_EQ(qpOasesSolver.SI_fail(), 0);
+}
+
 TEST_F(Problem, QLDOnQuadProgTest) {  // NOLINT
     copra::QLDSolver qpQLD;
     copra::QuadProgDenseSolver qpQuadProg;

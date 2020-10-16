@@ -27,8 +27,10 @@ std::unique_ptr<SolverInterface> solverFactory(SolverFlag flag)
     // case SolverFlag::QuadProgSparse:
     //    return std::make_unique<QuadProgSparseSolver>();
     case SolverFlag::QuadProgDense:
-    case SolverFlag::DEFAULT:
         return std::unique_ptr<QuadProgDenseSolver>(new QuadProgDenseSolver());
+    case SolverFlag::qpOASES:
+    case SolverFlag::DEFAULT:
+        return std::unique_ptr<qpOASESSolver>(new qpOASESSolver());
     default:
         throw std::runtime_error("Invalid solver flag");
     }
