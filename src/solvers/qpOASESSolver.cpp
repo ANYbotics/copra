@@ -86,12 +86,13 @@ bool qpOASESSolver::SI_solve(const Eigen::MatrixXd& Q, const Eigen::VectorXd& c,
 
   // Maximum number of working set recalculations. Refer to https://github.com/ANYbotics/qpOASES/blob/master/doc/manual.pdf for more info.
   qpOASES::int_t numIterations = 500;
+  qpOASES::real_t cpuTime = 0.02;
   int exitFlag = -1;
 
   if (doInitWorkspace_) {
     exitFlag = solver_->init(Q_.data(), g_.data(), A_.data(), XL_.data(), XU_.data(), bl_.data(), bu_.data(), numIterations);
   } else {
-    exitFlag = solver_->hotstart(Q_.data(), g_.data(), A_.data(), XL_.data(), XU_.data(), bl_.data(), bu_.data(), numIterations);
+    exitFlag = solver_->hotstart(Q_.data(), g_.data(), A_.data(), XL_.data(), XU_.data(), bl_.data(), bu_.data(), numIterations, &cpuTime);
   }
 
   if (exitFlag != qpOASES::SUCCESSFUL_RETURN) {
