@@ -24,6 +24,7 @@ public:
      * Default virtual destructor.
      */
     virtual ~SolverInterface() = default;
+
     /**
      * Get information of eventual fail's solver output as define by the
      * solver documentation.

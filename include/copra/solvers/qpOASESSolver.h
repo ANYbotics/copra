@@ -34,6 +34,24 @@ class COPRA_DLLAPI qpOASESSolver : public SolverInterface {
   //! Prints the solver status.
   void SI_inform() const override;
 
+  //! Get the maximum number of internal solver iterations.
+  int SI_maxIter() const override;
+
+  /*! Set the maximum number of internal solver iterations.
+   *
+   * @param maxIter Maximum number of working space recalculations.
+   */
+  void SI_maxIter(int maxIter) override;
+
+  //! Get the maximum allowed CPU time to compute a QP solution
+  double maxCpuTime() const;
+
+  /*! Set the maximum allowed CPU time to compute a QP solution
+   *
+   * @param maxCpuTime Maximum allowed CPU time.
+   */
+  void maxCpuTime(double maxCpuTime);
+
   /*! Set the logger level for the solver.
    *
    * @param pl verbosity level: 0 = NONE, 1 = LOW, 2 = MEDIUM and 3 = HIGH verbosity level.
@@ -96,6 +114,12 @@ class COPRA_DLLAPI qpOASESSolver : public SolverInterface {
 
   //! Boolean flag for re-initializing the problem.
   bool doInitWorkspace_ = true;
+
+  //! Maximum number of internal solver iterations.
+  int numIterations_ = 500;
+
+  //! Maximum allowed CPU time to compute a QP solution (disabled if zero, which is the default).
+  double maxCpuTime_ = 0.0;
 };
 
 }  // namespace copra

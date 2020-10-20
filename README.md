@@ -58,5 +58,6 @@ This package was forked from [jrl-umi3218](https://github.com/jrl-umi3218/copra)
 - Unit tests converted from doctest to Google Test
 - Introduce SimpleTrajectoryCost and SimpleControlCost
 - Introduce a method to reset all costs
+- Added support for the [qpOASES](https://github.com/ANYbotics/qpOASES/) QP solver
 
 The library was originally developed by [Vincent Samy](https://github.com/vsamy). It is licensed under the [BSD-2-Clause](https://opensource.org/licenses/BSD-2-Clause). Its default quadratic programming solver (eigen-quadprog) is licensed under the LGPLv2.

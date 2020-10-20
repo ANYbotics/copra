@@ -24,6 +24,22 @@ void qpOASESSolver::SI_inform() const {
   std::cout << "qpOASES solver status is " << solver_->getStatus() << "\n";
 }
 
+int qpOASESSolver::SI_maxIter() const {
+  return numIterations_;
+}
+
+void qpOASESSolver::SI_maxIter(int maxIter) {
+  numIterations_ = maxIter;
+}
+
+double qpOASESSolver::maxCpuTime() const {
+  return maxCpuTime_;
+}
+
+void qpOASESSolver::maxCpuTime(double maxCpuTime) {
+  maxCpuTime_ = maxCpuTime;
+}
+
 void qpOASESSolver::SI_printLevel(int pl) {
   qpOASES::PrintLevel printLevel;
   switch (pl) {
@@ -85,14 +101,18 @@ bool qpOASESSolver::SI_solve(const Eigen::MatrixXd& Q, const Eigen::VectorXd& c,
   bu_.tail(Aineq.rows()) = bineq;
 
   // Maximum number of working set recalculations. Refer to https://github.com/ANYbotics/qpOASES/blob/master/doc/manual.pdf for more info.
-  qpOASES::int_t numIterations = 500;
-  qpOASES::real_t cpuTime = 0.02;
+  qpOASES::int_t numIterations = numIterations_;
+  std::unique_ptr<qpOASES::real_t> cpuTime = nullptr;
+  if (maxCpuTime_ > 1e-6) {
+    cpuTime = std::make_unique<qpOASES::real_t>(maxCpuTime_);
+  }
   int exitFlag = -1;
 
   if (doInitWorkspace_) {
     exitFlag = solver_->init(Q_.data(), g_.data(), A_.data(), XL_.data(), XU_.data(), bl_.data(), bu_.data(), numIterations);
   } else {
-    exitFlag = solver_->hotstart(Q_.data(), g_.data(), A_.data(), XL_.data(), XU_.data(), bl_.data(), bu_.data(), numIterations, &cpuTime);
+    exitFlag =
+        solver_->hotstart(Q_.data(), g_.data(), A_.data(), XL_.data(), XU_.data(), bl_.data(), bu_.data(), numIterations, cpuTime.get());
   }
 
   if (exitFlag != qpOASES::SUCCESSFUL_RETURN) {

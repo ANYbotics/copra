@@ -44,10 +44,11 @@ public:
      * \param sFlag The flag corresponding to the desired solver.
      */
     LMPC(SolverFlag sFlag = SolverFlag::DEFAULT);
+
     /**
      * Initialize problem variables w.r.t. the System and get the desired
      * solver
-     * \param ps A preview system to amke a copy from.
+     * \param ps Preview system to copy.
      * \param sFlag The flag corresponding to the desired solver.
      */
     LMPC(const std::shared_ptr<System>& ps, SolverFlag sFlag = SolverFlag::DEFAULT);
@@ -60,15 +61,15 @@ public:
     void selectQPSolver(SolverFlag flag);
 
     /**
-     * Make the MPC uses a user-defined qp solver.
-     * \param solver The user-defined solver. It must inheritate from the SolverInterface.
+     * Make the MPC use a user-defined QP solver.
+     * \param solver The user-defined solver. It must inherit from the SolverInterface.
      */
     void useSolver(std::unique_ptr<SolverInterface>&& solver);
 
     /**
      * Initialize the controller with regard to the preview system.
      * This function needs to be called each time the system dimension changes.
-     * \param ps The preview system
+     * \param ps The preview system.
      */
     void initializeController(const std::shared_ptr<System>& ps);
 
@@ -90,23 +91,27 @@ public:
      * \return QP solver currently used.
      */
     inline SolverInterface& solver() { return *solver_; }
+
     /**
      * Get the solver result.
      * \return The control vector \f$U\f$.
      */
     const Eigen::VectorXd& control() const noexcept;
+
     /**
      * Get the preview trajectory.
      * \return The trajectory vector \f$X\f$.
      */
     Eigen::VectorXd trajectory() const noexcept;
+
     /**
-     * The time needed to solve the qp problem.
+     * The time needed to solve the quadratic program.
      * \return The elapsed time (in s) for solving.
      */
     double solveTime() const noexcept;
+
     /**
-     * The time needed to build and solve the qp problem.
+     * The time needed to build and solve the quadratic program.
      * \return The elapsed time (in s) for build and solving.
      */
     double solveAndBuildTime() const noexcept;
@@ -190,15 +195,47 @@ protected:
     };
 
 protected:
+    //! System the model predictive control problem applies to
     std::shared_ptr<System> system_;
+
+    //! Quadratic programming solver to use for numerical optimization
     std::unique_ptr<SolverInterface> solver_;
+
+    //! Cost function of the problem
     std::vector<std::shared_ptr<CostFunction>> spCost_;
+
+    //! Constraints of the problem
     Constraints constraints_;
 
-    Eigen::MatrixXd Q_, Aineq_, Aeq_;
-    Eigen::VectorXd c_, bineq_, beq_, lb_, ub_;
+    //! Internal cost-function matrix
+    Eigen::MatrixXd Q_;
 
-    std::chrono::duration<double> solveTime_, solveAndBuildTime_;
+    //! Internal inequality-constraint matrix
+    Eigen::MatrixXd Aineq_;
+
+    //! Internal equality-constraint matrix
+    Eigen::MatrixXd Aeq_;
+
+    //! Internal cost-function vector
+    Eigen::VectorXd c_;
+
+    //! Internal inequality-constraint vector
+    Eigen::VectorXd bineq_;
+
+    //! Internal equality-constraint vector
+    Eigen::VectorXd beq_;
+
+    //! Lower-bound vector
+    Eigen::VectorXd lb_;
+
+    //! Upper-bound vector
+    Eigen::VectorXd ub_;
+
+    //! Chronometer for QP solver computation time
+    std::chrono::duration<double> solveTime_;
+
+    //! Chronometer for both QP problem building and solving
+    std::chrono::duration<double> solveAndBuildTime_;
 };
 
-} // namespace pc
+} // namespace copra
