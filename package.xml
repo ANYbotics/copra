@@ -10,7 +10,6 @@
   <url type="bugtracker">https://github.com/jrl-umi3218/copra/issues</url>
   <author email="vincent.samy@aist.go.jp">Vincent Samy</author>
   <buildtool_depend>catkin</buildtool_depend>
-<!--   <build_depend>cmake_clang_tools</build_depend> -->
   <build_depend>eigen-qld</build_depend>
   <build_depend>eigen-quadprog</build_depend>
   <build_depend>eigen</build_depend>
