@@ -68,8 +68,10 @@ void qpOASESSolver::SI_problem(int nrVar, int nrEq, int nrInEq) {
     numVariables_ = nrVar;
     numConstraints_ = nrEq + nrInEq;
 
-    xOpt_ = new qpOASES::real_t[numVariables_];
-    yOpt_ = new qpOASES::real_t[numVariables_ + numConstraints_];
+    xOpt_.clear();
+    xOpt_.reserve(numVariables_);
+    yOpt_.clear();
+    yOpt_.reserve(numVariables_ + numConstraints_);
     solution_.resize(numVariables_, 1);
     doInitWorkspace_ = true;
 
@@ -118,9 +120,9 @@ bool qpOASESSolver::SI_solve(const Eigen::MatrixXd& Q, const Eigen::VectorXd& c,
   if (exitFlag != qpOASES::SUCCESSFUL_RETURN) {
     std::cerr << "qpOASES could not be successfully initialized! Init returned exit flag = " << exitFlag << "\n";
   } else {
-    exitFlag = solver_->getPrimalSolution(xOpt_);
+    exitFlag = solver_->getPrimalSolution(xOpt_.data());
     solver_->getPrimalSolution(solution_.data());
-    solver_->getDualSolution(yOpt_);
+    solver_->getDualSolution(yOpt_.data());
 
     if (exitFlag != qpOASES::SUCCESSFUL_RETURN) {
       std::cerr << "qpOASES did not solve the problem! Returned exit flag = " << exitFlag << "\n";

@@ -8,6 +8,7 @@
 #include <Eigen/Core>
 #include <memory>
 #include <qp_oases/qpOASES.hpp>
+#include <vector>
 
 #include "copra/SolverInterface.h"
 #include "copra/api.h"
@@ -107,10 +108,10 @@ class COPRA_DLLAPI qpOASESSolver : public SolverInterface {
   int numConstraints_ = 0;
 
   //! Primal solution vector.
-  qpOASES::real_t* xOpt_;
+  std::vector<qpOASES::real_t> xOpt_;
 
   //! Dual solution vector.
-  qpOASES::real_t* yOpt_;
+  std::vector<qpOASES::real_t> yOpt_;
 
   //! Boolean flag for re-initializing the problem.
   bool doInitWorkspace_ = true;
