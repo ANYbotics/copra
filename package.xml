@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>copra</name>
-  <version>1.2.9</version>
+  <version>1.2.10</version>
   <description>Library for linear model predictive control in C++14</description>
   <maintainer email="scaron@anybotics.com">Stéphane Caron</maintainer>
   <maintainer email="avijayan@anybotics.com">Aravind Vijayan</maintainer>
