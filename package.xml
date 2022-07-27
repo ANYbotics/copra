@@ -3,7 +3,7 @@
   <name>copra</name>
   <version>1.2.10</version>
   <description>Library for linear model predictive control in C++14</description>
-  <maintainer email="scaron@anybotics.com">Stéphane Caron</maintainer>
+  <maintainer email="rverschueren@anybotics.com">Robin Verschueren</maintainer>
   <maintainer email="avijayan@anybotics.com">Aravind Vijayan</maintainer>
   <license>BSD</license>
   <url type="website">https://github.com/anybotics/copra</url>
