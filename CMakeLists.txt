@@ -32,14 +32,14 @@ set(CMAKE_CXX_STANDARD 14)
 add_compile_options(-Wall -Wextra -Wpedantic)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CATKIN_PACKAGE_HEADER_DEPENDENCIES
+set(CATKIN_PACKAGE_DEPENDENCIES
   eigen-quadprog
   eigen-qld
   qp_oases
 )
 
 find_package(catkin REQUIRED COMPONENTS
-  ${CATKIN_PACKAGE_HEADER_DEPENDENCIES}
+  ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
 find_package(Eigen3 REQUIRED)
@@ -55,7 +55,7 @@ catkin_package(
   LIBRARIES
     ${PROJECT_NAME}
   CATKIN_DEPENDS
-    ${CATKIN_PACKAGE_HEADER_DEPENDENCIES}
+    ${CATKIN_PACKAGE_DEPENDENCIES}
 )
 
 ###########
