@@ -96,7 +96,7 @@ class COPRA_DLLAPI qpOASESSolver : public SolverInterface {
 
  private:
   //! qpOASES solver.
-  std::unique_ptr<qpOASES::SQProblem> solver_;
+  std::unique_ptr<qpOASES::QProblem> solver_;
 
   //! Solution vector.
   Eigen::VectorXd solution_;
@@ -113,14 +113,14 @@ class COPRA_DLLAPI qpOASESSolver : public SolverInterface {
   //! Dual solution vector.
   std::vector<qpOASES::real_t> yOpt_;
 
-  //! Boolean flag for re-initializing the problem.
-  bool doInitWorkspace_ = true;
-
   //! Maximum number of internal solver iterations.
   int numIterations_ = 500;
 
   //! Maximum allowed CPU time to compute a QP solution (disabled if zero, which is the default).
   double maxCpuTime_ = 0.0;
+
+  qpOASES::Bounds guessedBounds;
+  qpOASES::Constraints guessedConstraints;
 };
 
 }  // namespace copra

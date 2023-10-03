@@ -13,7 +13,7 @@ namespace copra {
  */
 
 qpOASESSolver::qpOASESSolver() {
-  solver_ = std::make_unique<qpOASES::SQProblem>();
+  solver_ = std::make_unique<qpOASES::QProblem>();
 }
 
 int qpOASESSolver::SI_fail() const {
@@ -73,13 +73,14 @@ void qpOASESSolver::SI_problem(int nrVar, int nrEq, int nrInEq) {
     yOpt_.clear();
     yOpt_.reserve(numVariables_ + numConstraints_);
     solution_.resize(numVariables_, 1);
-    doInitWorkspace_ = true;
+    guessedBounds.init(numVariables_);
+    guessedConstraints.init(numConstraints_);
 
     qpOASES::Options op;
     op.setToMPC();
     op.printLevel = solver_ != nullptr ? solver_->getPrintLevel() : qpOASES::PL_NONE;
     solver_.reset();
-    solver_ = std::make_unique<qpOASES::SQProblem>(numVariables_, numConstraints_, qpOASES::HessianType::HST_POSDEF);
+    solver_ = std::make_unique<qpOASES::QProblem>(numVariables_, numConstraints_, qpOASES::HessianType::HST_POSDEF);
     solver_->setOptions(op);
   }
 }
@@ -110,12 +111,11 @@ bool qpOASESSolver::SI_solve(const Eigen::MatrixXd& Q, const Eigen::VectorXd& c,
   }
   int exitFlag = -1;
 
-  if (doInitWorkspace_) {
-    exitFlag = solver_->init(Q_.data(), g_.data(), A_.data(), XL_.data(), XU_.data(), bl_.data(), bu_.data(), numIterations);
-  } else {
-    exitFlag =
-        solver_->hotstart(Q_.data(), g_.data(), A_.data(), XL_.data(), XU_.data(), bl_.data(), bu_.data(), numIterations, cpuTime.get());
-  }
+  // We don't expect Optimus Planner to have a lot of active constraints, so we guess them to be inactive.
+  // This speeds up the computations.
+  guessedBounds.setupAllFree();
+  guessedConstraints.setupAllInactive();
+  exitFlag = solver_->init(Q_.data(), g_.data(), A_.data(), XL_.data(), XU_.data(), bl_.data(), bu_.data(), numIterations, nullptr, nullptr, nullptr, &guessedBounds, &guessedConstraints);
 
   if (exitFlag != qpOASES::SUCCESSFUL_RETURN) {
     std::cerr << "qpOASES could not be successfully initialized! Init returned exit flag = " << exitFlag << "\n";
@@ -128,8 +128,6 @@ bool qpOASESSolver::SI_solve(const Eigen::MatrixXd& Q, const Eigen::VectorXd& c,
       std::cerr << "qpOASES did not solve the problem! Returned exit flag = " << exitFlag << "\n";
     }
   }
-
-  doInitWorkspace_ = (exitFlag != qpOASES::SUCCESSFUL_RETURN);
 
   return (exitFlag == qpOASES::SUCCESSFUL_RETURN);
 }
