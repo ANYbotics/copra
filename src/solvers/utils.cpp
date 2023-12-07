@@ -18,16 +18,20 @@ std::unique_ptr<SolverInterface> solverFactory(SolverFlag flag)
     case SolverFlag::GUROBIDense:
         return std::unique_ptr<GUROBISolver>(new GUROBISolver());
 #endif
+#ifdef EIGEN_QLD_FOUND
     case SolverFlag::QLD:
         return std::unique_ptr<QLDSolver>(new QLDSolver());
+#endif
 #ifdef EIGEN_OSQP_FOUND
     case SolverFlag::OSQP:
         return std::unique_ptr<OSQPSolver>(new OSQPSolver());
 #endif
     // case SolverFlag::QuadProgSparse:
     //    return std::make_unique<QuadProgSparseSolver>();
+#ifdef EIGEN_QUADPROG_FOUND
     case SolverFlag::QuadProgDense:
         return std::unique_ptr<QuadProgDenseSolver>(new QuadProgDenseSolver());
+#endif
     case SolverFlag::qpOASES:
     case SolverFlag::DEFAULT:
         return std::unique_ptr<qpOASESSolver>(new qpOASESSolver());

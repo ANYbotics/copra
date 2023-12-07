@@ -14,6 +14,7 @@
 
 #include "time_invariant_systems.h"
 
+#ifdef EIGEN_QUADPROG_FOUND
 TEST_F(Problem, QuadProgTest) {  // NOLINT
     copra::QuadProgDenseSolver qpQuadProg;
 
@@ -22,6 +23,7 @@ TEST_F(Problem, QuadProgTest) {  // NOLINT
 
     ASSERT_EQ(qpQuadProg.SI_fail(), 0);
 }
+#endif
 
 TEST_F(Problem, qpOASESTest) {  // NOLINT
   copra::qpOASESSolver qpOasesSolver;
@@ -32,6 +34,7 @@ TEST_F(Problem, qpOASESTest) {  // NOLINT
   ASSERT_EQ(qpOasesSolver.SI_fail(), 0);
 }
 
+#ifdef EIGEN_QLD_FOUND
 TEST_F(Problem, QLDOnQuadProgTest) {  // NOLINT
     copra::QLDSolver qpQLD;
     copra::QuadProgDenseSolver qpQuadProg;
@@ -47,6 +50,7 @@ TEST_F(Problem, QLDOnQuadProgTest) {  // NOLINT
     ASSERT_EQ(qpQLD.SI_fail(), 0);
     ASSERT_EQ(qpQuadProg.SI_fail(), 0);
 }
+#endif
 
 #ifdef EIGEN_LSSOL_FOUND
 TEST_F(Problem, LSSOLOnQuadProgTest) {  // NOLINT

@@ -33,8 +33,6 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
-  eigen-quadprog
-  eigen-qld
   qp_oases
 )
 
@@ -72,9 +70,9 @@ add_library(${PROJECT_NAME}
   src/constraints.cpp
   src/costFunctions.cpp
   src/debugUtils.cpp
-  src/solvers/QLDSolver.cpp
+  # src/solvers/QLDSolver.cpp # needs eigen-qld
   src/solvers/qpOASESSolver.cpp
-  src/solvers/QuadProgSolver.cpp
+  # src/solvers/QuadProgSolver.cpp # needs eigen-quadprog
   src/solvers/utils.cpp
   src/systems/System.cpp
   src/systems/TimeInvariantSystem.cpp
@@ -89,7 +87,8 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
   # EIGEN_GUROBI_FOUND  # uncomment if adding Gurobi
   # EIGEN_LSSOL_FOUND  # uncomment if adding LSSOL
   # EIGEN_OSQP_FOUND  # uncomment if adding eigen-osqp
-  EIGEN_QLD_FOUND
+  # EIGEN_QLD_FOUND  # uncomment if adding eigen-qld
+  # EIGEN_QUADPROG_FOUND # uncomment if adding eigen-quadprog
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -151,12 +150,13 @@ if(TARGET test_${PROJECT_NAME})
     # EIGEN_GUROBI_FOUND  # uncomment if adding Gurobi
     # EIGEN_LSSOL_FOUND  # uncomment if adding LSSOL
     # EIGEN_OSQP_FOUND  # uncomment if adding eigen-osqp
-    EIGEN_QLD_FOUND
+    # EIGEN_QLD_FOUND  # uncomment if adding eigen-qld
+    # EIGEN_QUADPROG_FOUND # uncomment if adding eigen-quadprog
   )
 
   target_include_directories(test_${PROJECT_NAME} PRIVATE
     include
-    )
+  )
 
   target_include_directories(test_${PROJECT_NAME} SYSTEM PUBLIC
     ${catkin_INCLUDE_DIRS}

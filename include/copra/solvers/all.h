@@ -5,8 +5,12 @@
 
 #pragma once
 
+#ifdef EIGEN_QUADPROG_FOUND
 #include "QuadProgSolver.h"
+#endif
+#ifdef EIGEN_QLD_FOUND
 #include "QLDSolver.h"
+#endif
 #include "qpOASESSolver.h"
 #ifdef EIGEN_LSSOL_FOUND
 #include "LSSOLSolver.h"

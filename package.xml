@@ -13,8 +13,6 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>eigen</depend>
-  <depend>eigen-qld</depend>
-  <depend>eigen-quadprog</depend>
   <depend>qp_oases</depend>
 
   <test_depend>gtest</test_depend>
