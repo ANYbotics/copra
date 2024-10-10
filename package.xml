@@ -1,20 +1,22 @@
-<?xml version="1.0"?>
-<package format="2">
+<?xml version='1.0' encoding='utf-8'?>
+<package format="3">
   <name>copra</name>
   <version>1.2.25</version>
   <description>Library for linear model predictive control in C++14</description>
+  <author email="vincent.samy@aist.go.jp">Vincent Samy</author>
   <maintainer email="rverschueren@anybotics.com">Robin Verschueren</maintainer>
   <maintainer email="avijayan@anybotics.com">Aravind Vijayan</maintainer>
   <license>BSD</license>
   <url type="website">https://github.com/anybotics/copra</url>
   <url type="bugtracker">https://github.com/jrl-umi3218/copra/issues</url>
-  <author email="vincent.samy@aist.go.jp">Vincent Samy</author>
-
-  <buildtool_depend>catkin</buildtool_depend>
-
+  <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
+  <buildtool_depend condition="$ROS_VERSION == 2">ament_cmake</buildtool_depend>
   <depend>eigen</depend>
   <depend>qp_oases</depend>
-
-  <test_depend>gtest</test_depend>
-<!--   <test_depend>cmake_code_coverage</test_depend> -->
+  <test_depend condition="$ROS_VERSION == 1">gtest</test_depend>
+<!--   <test_depend condition="$ROS_VERSION == 1">cmake_code_coverage</test_depend> -->
+  <test_depend condition="$ROS_VERSION == 2">ament_cmake_gtest</test_depend>
+  <export>
+    <build_type condition="$ROS_VERSION == 2">ament_cmake</build_type>
+  </export>
 </package>

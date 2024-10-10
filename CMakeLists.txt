@@ -25,12 +25,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.16.3)
 project(copra)
 
 set(CMAKE_CXX_STANDARD 17)
 add_compile_options(-Wall -Wextra -Wpedantic)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+if("$ENV{ROS_VERSION}" STREQUAL "1")
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   qp_oases
@@ -169,4 +171,93 @@ if(TARGET test_${PROJECT_NAME})
       TEST_BUILD_TARGETS test_${PROJECT_NAME}
     )
   endif(cmake_code_coverage_FOUND)
+endif()
+
+else() # ROS version 2
+
+set(PACKAGE_DEPENDENCIES
+  qp_oases
+  Eigen3
+  )
+
+find_package(ament_cmake REQUIRED)
+
+foreach(PKG ${PACKAGE_DEPENDENCIES})
+  find_package(${PKG} REQUIRED)
+endforeach()
+
+add_library(${PROJECT_NAME} SHARED
+  src/AutoSpan.cpp
+  src/LMPC.cpp
+  src/SolverInterface.cpp
+  src/constraints.cpp
+  src/costFunctions.cpp
+  src/debugUtils.cpp
+  src/solvers/qpOASESSolver.cpp
+  src/solvers/utils.cpp
+  src/systems/System.cpp
+  src/systems/TimeInvariantSystem.cpp
+  src/systems/TimeVariantSystem.cpp
+  )
+
+target_include_directories(${PROJECT_NAME}
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
+  )
+
+target_link_libraries(${PROJECT_NAME}
+  Eigen3::Eigen
+  )
+  
+ament_target_dependencies(${PROJECT_NAME} ${PACKAGE_DEPENDENCIES})
+
+#############
+## Install ##
+#############
+
+install(DIRECTORY include/
+  DESTINATION include/${PROJECT_NAME}
+  )
+  
+install(TARGETS ${PROJECT_NAME}
+  EXPORT export_${PROJECT_NAME}
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_dependencies(${PACKAGE_DEPENDENCIES})
+
+##########
+## Test ##
+##########
+
+if(BUILD_TESTING)
+
+  find_package(ament_cmake_gtest REQUIRED)
+
+  ament_add_gtest(test_${PROJECT_NAME}
+    test/TestSolvers.cpp
+    test/TestTimeInvariantSystems.cpp
+    test/TestTimeVariantSystems.cpp
+    test/main.cpp
+    test/tools.cpp
+    )
+
+  target_link_libraries(test_${PROJECT_NAME}
+    ${PROJECT_NAME}
+  )
+
+  find_package(cmake_code_coverage QUIET)
+
+  if(cmake_code_coverage_FOUND)
+    add_gtest_coverage(TEST_BUILD_TARGETS test_${PROJECT_NAME})
+  endif(cmake_code_coverage_FOUND)
+
+endif()
+
+ament_package()
+
 endif()
