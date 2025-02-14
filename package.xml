@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <package format="3">
   <name>copra</name>
-  <version>1.2.26</version>
+  <version>1.2.27</version>
   <description>Library for linear model predictive control in C++14</description>
   <author email="vincent.samy@aist.go.jp">Vincent Samy</author>
   <maintainer email="jjunger@anybotics.com">Jonas Junger</maintainer>
