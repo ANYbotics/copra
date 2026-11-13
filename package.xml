@@ -4,8 +4,7 @@
   <version>1.2.27</version>
   <description>Library for linear model predictive control in C++14</description>
   <author email="vincent.samy@aist.go.jp">Vincent Samy</author>
-  <maintainer email="jjunger@anybotics.com">Jonas Junger</maintainer>
-  <maintainer email="zli@anybotics.com">Zichong Li</maintainer>
+  <maintainer email="support@anybotics.com">ANYbotics</maintainer>
   <license>BSD</license>
   <url type="website">https://github.com/anybotics/copra</url>
   <url type="bugtracker">https://github.com/jrl-umi3218/copra/issues</url>
