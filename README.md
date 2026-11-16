@@ -1,3 +1,6 @@
+> [!NOTE]
+> This repository is archived and no longer maintained. It is a snapshot of 13 Nov 2026.
+
 # Copra
 
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-green.svg)](https://opensource.org/licenses/BSD-2-Clause)
